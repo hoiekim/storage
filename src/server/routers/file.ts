@@ -5,9 +5,9 @@ import mime from "mime-types";
 
 import { PUBLIC_DIR, Router } from "./common";
 
-const FILES_ROUTE = "/files/:id";
+const FILE_ROUTE = "/file/:id";
 
-const filesHandler: RequestHandler = async (req, res) => {
+const fileHandler: RequestHandler = async (req, res) => {
   const { id } = req.params;
   const filePath = path.join(PUBLIC_DIR, id);
 
@@ -53,7 +53,7 @@ const filesHandler: RequestHandler = async (req, res) => {
   }
 };
 
-export const filesRouter: Router = {
-  routeName: FILES_ROUTE,
-  routeHandlers: [filesHandler],
+export const fileRouter: Router = {
+  routeName: FILE_ROUTE,
+  routeHandlers: [fileHandler],
 };

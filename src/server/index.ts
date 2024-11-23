@@ -1,7 +1,8 @@
 import express from "express";
 import {
   authenticate,
-  filesRouter,
+  fileRouter,
+  metadataByIdRouter,
   metadataRouter,
   uploadErrorHandler,
   uploadRouter,
@@ -10,9 +11,9 @@ import {
 const app = express();
 
 app.use(authenticate);
-app.get(filesRouter.routeName, ...filesRouter.routeHandlers);
+app.get(fileRouter.routeName, ...fileRouter.routeHandlers);
 app.get(metadataRouter.routeName, ...metadataRouter.routeHandlers);
-app.get(uploadRouter.routeName, ...uploadRouter.routeHandlers);
+app.post(uploadRouter.routeName, ...uploadRouter.routeHandlers);
 app.use(uploadErrorHandler);
 
 export { app };

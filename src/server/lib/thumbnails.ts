@@ -4,27 +4,25 @@ import { v4 as uuidv4 } from "uuid";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg";
 
-export const createPhotoThumbnail = async (
+export const getPhotoThumbnail = async (
   filePath: string,
-  width = 500,
-  slient = false
+  { width = 500, silent = false } = {}
 ) => {
   try {
     const buffer = await sharp(filePath).resize(width, width).toBuffer();
-    if (!slient) console.log(`Photo thumbnail created for ${filePath}`);
+    if (!silent) console.log(`Photo thumbnail created for ${filePath}`);
     return buffer;
   } catch (err) {
-    if (!slient) console.error("Error creating photo thumbnail:", err);
+    if (!silent) console.error("Error creating photo thumbnail:", err);
     throw err;
   }
 };
 
 const TEMP_DIR = path.join(__dirname, "../../../.temp");
 
-export const createVideoThumbnail = async (
+export const getVideoThumbnail = async (
   filePath: string,
-  width = 500,
-  time = 0
+  { width = 500, time = 0 } = {}
 ) => {
   const tempId = uuidv4();
   const tempPath = path.join(TEMP_DIR, `${tempId}.png`);
@@ -51,7 +49,10 @@ export const createVideoThumbnail = async (
     }
   });
 
-  const thumbnail = await createPhotoThumbnail(tempPath, width, true);
+  const thumbnail = await getPhotoThumbnail(tempPath, {
+    width,
+    silent: true,
+  });
   fs.rmSync(tempPath);
 
   return thumbnail;

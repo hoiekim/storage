@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { getExifMetadata } from "./exiftool";
 import { Metadata } from "./sqlite";
-import { createPhotoThumbnail, createVideoThumbnail } from "./thumbnails";
+import { getPhotoThumbnail, getVideoThumbnail } from "./thumbnails";
 
 export const getMetadata = async (
   filePath: string,
@@ -38,11 +38,16 @@ export const getMetadata = async (
   const thumbnailPromise = new Promise<Buffer | null>(async (res, rej) => {
     if (!createThumbnail) return res(null);
     try {
-      const isPhoto = MIMEType.startsWith("image/");
-      const isVideo = MIMEType.startsWith("video/");
-      const photoThumb = isPhoto ? await createPhotoThumbnail(filePath) : null;
-      const videoThumb = isVideo ? await createVideoThumbnail(filePath) : null;
-      res(photoThumb || videoThumb);
+      if (MIMEType.startsWith("image/")) {
+        const thumbnail = await getPhotoThumbnail(filePath);
+        res(thumbnail);
+      } else if (MIMEType.startsWith("video/")) {
+        const time = typeof Duration === "number" ? (2 * Duration) / 3 : 0;
+        const thumbnail = await getVideoThumbnail(filePath, { time });
+        res(thumbnail);
+      } else {
+        res(null);
+      }
     } catch (err: any) {
       console.error(`Failed to create thumbnail: ${filePath}`);
       console.error(err);

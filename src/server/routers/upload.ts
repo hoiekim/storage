@@ -7,14 +7,12 @@ import { Router, UPLOAD_DIR } from "./common";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => {
-    cb(null, uuidv4());
-  },
+  filename: (req, file, cb) => cb(null, uuidv4()),
 });
 
 const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+  limits: { fileSize: 1024 * 1024 * 1024 }, // 1GB limit
   fileFilter: (req, file, cb) => {
     const isPhoto = file.mimetype.startsWith("image/");
     const isViceo = file.mimetype.startsWith("video/");
@@ -27,7 +25,7 @@ const upload = multer({
   },
 });
 
-const UPLOAD_ROUTE = "/files/:id";
+const UPLOAD_ROUTE = "/upload";
 
 const uploadHandler: RequestHandler = async (req, res) => {
   const file = req.file;
