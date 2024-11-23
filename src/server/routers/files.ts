@@ -1,12 +1,9 @@
 import path from "path";
-import { createReadStream, stat } from "fs";
-import { promisify } from "util";
+import fs, { createReadStream } from "fs";
 import { RequestHandler } from "express";
 import mime from "mime-types";
 
 import { PUBLIC_DIR, Router } from "./common";
-
-const statAsync = promisify(stat);
 
 const FILES_ROUTE = "/files/:id";
 
@@ -15,8 +12,7 @@ const filesHandler: RequestHandler = async (req, res) => {
   const filePath = path.join(PUBLIC_DIR, id);
 
   try {
-    const fileStat = await statAsync(filePath);
-
+    const fileStat = await fs.promises.stat(filePath);
     const mimeType = mime.lookup(filePath) || "application/octet-stream";
     res.setHeader("Content-Type", mimeType);
     res.setHeader("Content-Length", fileStat.size);
@@ -51,8 +47,9 @@ const filesHandler: RequestHandler = async (req, res) => {
       const fileStream = createReadStream(filePath);
       fileStream.pipe(res);
     }
-  } catch (error) {
-    res.status(404).send("File not found");
+  } catch (err: any) {
+    const message = "message" in err ? err.message : "Unknown error";
+    res.status(404).json({ message: `File not found: ${message}` });
   }
 };
 

@@ -1,16 +1,11 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { app } from "./server";
-import { getVideoMetadata } from "./server/lib";
+import { app, database } from "server";
 
-const { PORT } = process.env;
+database.init();
 
-// Start server
-app.listen(PORT || 3006, async () => {
+const { PORT = 3006 } = process.env;
+app.listen(PORT, () => {
   console.log(`File server running at http://localhost:${PORT}`);
-  const metadata = await getVideoMetadata(
-    "/Users/hoiekim/Pictures/backup_videos_2"
-  );
-  console.log(metadata);
 });

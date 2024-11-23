@@ -1,245 +1,130 @@
-const { exiftool } = require("exiftool-vendored");
+import { BinaryField, ExifDateTime, ExifTool } from "exiftool-vendored";
 
-export const getVideoMetadata = (filePath: string) => {
-  return new Promise<any>(async (res, rej) => {
+export const getExifMetadata = (filePath: string) => {
+  return new Promise<ExifMetadata>(async (res, rej) => {
+    const exiftool = new ExifTool();
     try {
       const metadata = await exiftool.read(filePath);
-      res(metadata);
+      res(metadata as unknown as ExifMetadata);
     } catch (error) {
       console.error("Error reading metadata:", error);
-      res(undefined);
+      rej(error);
     } finally {
-      // Make sure to close the ExifTool process
       await exiftool.end();
-      console.log("Successfully closed exiftool.");
     }
   });
 };
 
-const example = {
-  SourceFile: "/Users/hoiekim/Pictures/backup_videos_2/IMG_7367.MOV",
-  errors: [],
-  tz: "America/Los_Angeles",
-  tzSource: "GPSLatitude/GPSLongitude",
-  Duration: 11.7333333333333,
-  PreviewDuration: 0,
-  SelectionDuration: 0,
-  TrackDuration: 11.7333333333333,
-  MediaDuration: 11.7333333333333,
-  GPSAltitude: 33.612,
-  ExifToolVersion: 13,
-  FileName: "IMG_7367.MOV",
-  Directory: "/Users/hoiekim/Pictures/backup_videos_2",
-  FileSize: "24 MB",
-  FileModifyDate: {
-    year: 2024,
-    month: 11,
-    day: 20,
-    hour: 19,
-    minute: 12,
-    second: 52,
-    millisecond: undefined,
-    tzoffsetMinutes: -480,
-    rawValue: "2024:11:20 19:12:52-08:00",
-    zoneName: "UTC-8",
-    inferredZone: false,
-    zone: "UTC-8",
-  },
-  FileAccessDate: {
-    year: 2024,
-    month: 11,
-    day: 20,
-    hour: 20,
-    minute: 18,
-    second: 3,
-    millisecond: undefined,
-    tzoffsetMinutes: -480,
-    rawValue: "2024:11:20 20:18:03-08:00",
-    zoneName: "UTC-8",
-    inferredZone: false,
-    zone: "UTC-8",
-  },
-  FileInodeChangeDate: {
-    year: 2024,
-    month: 11,
-    day: 20,
-    hour: 20,
-    minute: 18,
-    second: 5,
-    millisecond: undefined,
-    tzoffsetMinutes: -480,
-    rawValue: "2024:11:20 20:18:05-08:00",
-    zoneName: "UTC-8",
-    inferredZone: false,
-    zone: "UTC-8",
-  },
-  FilePermissions: "-rw-------",
-  FileType: "MOV",
-  FileTypeExtension: "mov",
-  MIMEType: "video/quicktime",
-  MajorBrand: "Apple QuickTime (.MOV/QT)",
-  MinorVersion: "0.0.0",
-  CompatibleBrands: ["qt  "],
-  MediaDataSize: 23751667,
-  MediaDataOffset: 36,
-  MovieHeaderVersion: 0,
-  CreateDate: {
-    year: 2022,
-    month: 9,
-    day: 5,
-    hour: 12,
-    minute: 11,
-    second: 27,
-    millisecond: undefined,
-    tzoffsetMinutes: -420,
-    rawValue: "2022:09:05 19:11:27",
-    zoneName: "America/Los_Angeles",
-    inferredZone: true,
-    zone: "America/Los_Angeles",
-  },
-  ModifyDate: {
-    year: 2022,
-    month: 9,
-    day: 5,
-    hour: 12,
-    minute: 11,
-    second: 39,
-    millisecond: undefined,
-    tzoffsetMinutes: -420,
-    rawValue: "2022:09:05 19:11:39",
-    zoneName: "America/Los_Angeles",
-    inferredZone: true,
-    zone: "America/Los_Angeles",
-  },
-  TimeScale: 600,
-  PreferredRate: 1,
-  PreferredVolume: "100.00%",
-  PreviewTime: "0 s",
-  PosterTime: "0 s",
-  SelectionTime: "0 s",
-  CurrentTime: "0 s",
-  NextTrackID: 5,
-  TrackHeaderVersion: 0,
-  TrackCreateDate: {
-    year: 2022,
-    month: 9,
-    day: 5,
-    hour: 12,
-    minute: 11,
-    second: 27,
-    millisecond: undefined,
-    tzoffsetMinutes: -420,
-    rawValue: "2022:09:05 19:11:27",
-    zoneName: "America/Los_Angeles",
-    inferredZone: true,
-    zone: "America/Los_Angeles",
-  },
-  TrackModifyDate: {
-    year: 2022,
-    month: 9,
-    day: 5,
-    hour: 12,
-    minute: 11,
-    second: 39,
-    millisecond: undefined,
-    tzoffsetMinutes: -420,
-    rawValue: "2022:09:05 19:11:39",
-    zoneName: "America/Los_Angeles",
-    inferredZone: true,
-    zone: "America/Los_Angeles",
-  },
-  TrackID: 1,
-  TrackLayer: 0,
-  TrackVolume: "0.00%",
-  ImageWidth: 1920,
-  ImageHeight: 1440,
-  CleanApertureDimensions: "1920x1440",
-  ProductionApertureDimensions: "1920x1440",
-  EncodedPixelsDimensions: "1920x1440",
-  GraphicsMode: "ditherCopy",
-  OpColor: "32768 32768 32768",
-  CompressorID: "hvc1",
-  SourceImageWidth: 1920,
-  SourceImageHeight: 1440,
-  XResolution: 72,
-  YResolution: 72,
-  CompressorName: "HEVC",
-  BitDepth: 24,
-  VideoFrameRate: 30,
-  Balance: 0,
-  AudioFormat: "lpcm",
-  AudioChannels: 3,
-  AudioBitsPerSample: 16,
-  AudioSampleRate: 1,
-  MatrixStructure: "1 0 0 0 1 0 0 0 1",
-  ContentDescribes: "Track 1",
-  MediaHeaderVersion: 0,
-  MediaCreateDate: {
-    year: 2022,
-    month: 9,
-    day: 5,
-    hour: 12,
-    minute: 11,
-    second: 27,
-    millisecond: undefined,
-    tzoffsetMinutes: -420,
-    rawValue: "2022:09:05 19:11:27",
-    zoneName: "America/Los_Angeles",
-    inferredZone: true,
-    zone: "America/Los_Angeles",
-  },
-  MediaModifyDate: {
-    year: 2022,
-    month: 9,
-    day: 5,
-    hour: 12,
-    minute: 11,
-    second: 39,
-    millisecond: undefined,
-    tzoffsetMinutes: -420,
-    rawValue: "2022:09:05 19:11:39",
-    zoneName: "America/Los_Angeles",
-    inferredZone: true,
-    zone: "America/Los_Angeles",
-  },
-  MediaTimeScale: 600,
-  MediaLanguageCode: "und",
-  GenMediaVersion: 0,
-  GenFlags: "0 0 0",
-  GenGraphicsMode: "ditherCopy",
-  GenOpColor: "32768 32768 32768",
-  GenBalance: 0,
-  HandlerClass: "Data Handler",
-  HandlerVendorID: "Apple",
-  HandlerDescription: "Core Media Data Handler",
-  MetaFormat: "mebx",
-  HandlerType: "Metadata Tags",
-  LocationAccuracyHorizontal: 15.617088,
-  GPSCoordinates: `37 deg 20' 57.84" N, 121 deg 53' 29.04" W, 33.612 m Above Sea Level`,
-  Make: "Apple",
-  Model: "iPhone 13 mini",
-  Software: "15.6.1",
-  CreationDate: {
-    year: 2022,
-    month: 9,
-    day: 5,
-    hour: 12,
-    minute: 11,
-    second: 26,
-    millisecond: undefined,
-    tzoffsetMinutes: -420,
-    rawValue: "2022:09:05 12:11:26-07:00",
-    zoneName: "UTC-7",
-    inferredZone: false,
-    zone: "UTC-7",
-  },
-  ImageSize: "1920x1440",
-  Megapixels: 2.8,
-  AvgBitrate: "16.2 Mbps",
-  GPSAltitudeRef: "Above Sea Level",
-  GPSLatitude: 37.3494,
-  GPSLongitude: -121.8914,
-  Rotation: 90,
-  GPSPosition: `37 deg 20' 57.84" N, 121 deg 53' 29.04" W`,
-  warnings: [],
-};
+export type ExifMetadata = ExifCommonMetadata &
+  Partial<ExifVideoMetadata & ExifAaeMetadata>;
+
+export interface ExifCommonMetadata {
+  SourceFile: string; // "/my-folder/IMG_7367.MOV"
+  errors: any[];
+  warnings: any[];
+  ExifToolVersion: number; // 13
+  FileName: string; // "IMG_7367.MOV"
+  Directory: string; // "/my-folder
+  FileSize: string; // "24 MB"
+  FileModifyDate: ExifDateTime;
+  FileAccessDate: ExifDateTime;
+  FileInodeChangeDate: ExifDateTime;
+  FilePermissions: string; // "-rw-------"
+  FileType: string; // "MOV"
+  FileTypeExtension: string; // "mov"
+  MIMEType: string; // "video/quicktime"
+}
+
+export interface ExifVideoMetadata {
+  tz: string; // "America/Los_Angeles"
+  tzSource: string; // "GPSLatitude/GPSLongitude"
+  Duration: number; // 11.7333333333333
+  PreviewDuration: number; // 0
+  SelectionDuration: number; // 0
+  TrackDuration: number; // 11.7333333333333
+  MediaDuration: number; // 11.7333333333333
+  GPSAltitude: number; // 33.612
+  MajorBrand: string; // "Apple QuickTime (.MOV/QT)"
+  MinorVersion: string; // "0.0.0"
+  CompatibleBrands: string[]; // ["qt  "]
+  MediaDataSize: number; // 23751667
+  MediaDataOffset: number; // 36
+  MovieHeaderVersion: number; // 0
+  CreateDate: ExifDateTime | string;
+  ModifyDate: ExifDateTime;
+  TimeScale: number; // 600
+  PreferredRate: number; // 1
+  PreferredVolume: string; // "100.00%"
+  PreviewTime: string; // "0 s",
+  PosterTime: string; // "0 s",
+  SelectionTime: string; // "0 s",
+  CurrentTime: string; // "0 s",
+  NextTrackID: number; // 5,
+  TrackHeaderVersion: number; // 0,
+  TrackCreateDate: ExifDateTime;
+  TrackModifyDate: ExifDateTime;
+  TrackID: number; // 1,
+  TrackLayer: number; // 0,
+  TrackVolume: string; // "0.00%",
+  ImageWidth: number; // 1920,
+  ImageHeight: number; // 1440,
+  CleanApertureDimensions: string; // "1920x1440",
+  ProductionApertureDimensions: string; // "1920x1440",
+  EncodedPixelsDimensions: string; // "1920x1440",
+  GraphicsMode: string; // "ditherCopy",
+  OpColor: string; // "32768 32768 32768",
+  CompressorID: string; // "hvc1",
+  SourceImageWidth: number; // 1920,
+  SourceImageHeight: number; // 1440,
+  XResolution: number; // 72,
+  YResolution: number; // 72,
+  CompressorName: string; // "HEVC",
+  BitDepth: number; // 24,
+  PixelAspectRatio?: string; // "1:1",
+  VideoFrameRate: number; // 30,
+  Balance: number; // 0,
+  AudioFormat: string; // "lpcm",
+  AudioChannels: number; // 3,
+  AudioBitsPerSample: number; // 16,
+  AudioSampleRate: number; // 1,
+  MatrixStructure: string; // "1 0 0 0 1 0 0 0 1",
+  ContentDescribes: string; // "Track 1",
+  MediaHeaderVersion: number; // 0,
+  MediaCreateDate: ExifDateTime | string;
+  MediaModifyDate: ExifDateTime;
+  MediaTimeScale: number; // 600,
+  MediaLanguageCode: string; // "und",
+  GenMediaVersion: number; // 0,
+  GenFlags: string; // "0 0 0",
+  GenGraphicsMode: string; // "ditherCopy",
+  GenOpColor: string; // "32768 32768 32768",
+  GenBalance: number; // 0,
+  HandlerClass: string; // "Data Handler",
+  HandlerVendorID: string; // "Apple",
+  Encoder?: string; // "Lavf58.45.100",
+  HandlerDescription: string; // "Core Media Data Handler",
+  MetaFormat: string; // "mebx",
+  HandlerType: string; // "Metadata Tags",
+  LocationAccuracyHorizontal: number; // 15.617088,
+  GPSCoordinates: string; // `37 deg 20' 57.84" N, 121 deg 53' 29.04" W, 33.612 m Above Sea Level`,
+  Make: string; // "Apple",
+  Model: string; // "iPhone 13 mini",
+  Software: string; // "15.6.1",
+  CreationDate: ExifDateTime;
+  ImageSize: string; // "1920x1440",
+  Megapixels: number; // 2.8,
+  AvgBitrate: string; // "16.2 Mbps",
+  GPSAltitudeRef: string; // "Above Sea Level",
+  GPSLatitude: number; // 37.3494,
+  GPSLongitude: number; // -121.8914,
+  Rotation: number; // 90,
+  GPSPosition: string; // `37 deg 20' 57.84" N, 121 deg 53' 29.04" W`,
+}
+
+export interface ExifAaeMetadata {
+  AdjustmentBaseVersion?: number; // 0
+  AdjustmentData?: BinaryField;
+  AdjustmentFormatIdentifier?: string; // "com.apple.photo"
+  AdjustmentFormatVersion?: number; // 1.6,
+  AdjustmentRenderTypes?: number; // 0,
+}

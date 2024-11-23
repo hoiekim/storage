@@ -1,19 +1,25 @@
+import path from "path";
+import { v4 as uuidv4 } from "uuid";
 import express, { RequestHandler } from "express";
 import multer from "multer";
+import { database, getMetadata } from "server";
 import { Router, UPLOAD_DIR } from "./common";
 
-// Set up Multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  filename: (req, file, cb) => {
+    cb(null, uuidv4());
+  },
+});
+
 const upload = multer({
-  dest: UPLOAD_DIR,
+  storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
   fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = [
-      "image/jpeg",
-      "image/png",
-      "video/mp4",
-      "video/quicktime",
-    ];
-    if (allowedMimeTypes.includes(file.mimetype)) {
+    const isPhoto = file.mimetype.startsWith("image/");
+    const isViceo = file.mimetype.startsWith("video/");
+    const isAllowedType = isPhoto || isViceo;
+    if (isAllowedType) {
       cb(null, true);
     } else {
       cb(new Error("Invalid file type. Only photos and videos are allowed."));
@@ -23,22 +29,31 @@ const upload = multer({
 
 const UPLOAD_ROUTE = "/files/:id";
 
-// Handle file uploads
-const uploadHandler: RequestHandler = (req, res) => {
+const uploadHandler: RequestHandler = async (req, res) => {
   const file = req.file;
 
   if (!file) {
-    res.status(400).send("No file uploaded.");
+    res.status(400).json({ message: "No file uploaded." });
     return;
   }
 
-  res.status(200).json({
-    message: "File uploaded successfully",
-    fileName: file.filename,
-    originalName: file.originalname,
-    mimeType: file.mimetype,
-    size: file.size,
-  });
+  try {
+    const savedPath = path.join(UPLOAD_DIR, file.filename);
+    const metadata = await getMetadata(savedPath);
+    metadata.filename = file.originalname;
+    database.insert(metadata);
+    res.status(200).json({
+      message: "File uploaded successfully.",
+      body: {
+        originalName: file.originalname,
+        mimeType: file.mimetype,
+        size: file.size,
+      },
+    });
+  } catch (err: any) {
+    const message = "message" in err ? err.message : "Unknown error";
+    res.status(400).json({ message: `Corrupted file: ${message}` });
+  }
 };
 
 export const uploadRouter: Router = {
@@ -54,9 +69,10 @@ export const uploadErrorHandler = (
   next: express.NextFunction
 ) => {
   if (err instanceof multer.MulterError) {
-    res.status(400).send(`Multer Error: ${err.message}`);
+    res.status(400).json({ message: `Multer Error: ${err.message}` });
   } else if (err) {
-    res.status(400).send(`Error: ${err.message}`);
+    const message = "message" in err ? err.message : "Unknown error";
+    res.status(400).json({ message: `Error: ${message}` });
   } else {
     next();
   }
