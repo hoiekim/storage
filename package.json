@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "tsc",
-    "start": "bun src/start.ts"
+    "build": "tsc",
+    "test": "tsc --noEmit",
+    "start": "bun src/start.ts",
+    "dev": "bun --watch src/start.ts",
+    "api-docs": "bun src/get-api-docs.ts"
   },
   "author": "hoiekim",
   "license": "ISC",

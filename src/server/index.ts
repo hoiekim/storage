@@ -13,6 +13,7 @@ const app = express();
 app.use(authenticate);
 app.get(fileRouter.routeName, ...fileRouter.routeHandlers);
 app.get(metadataRouter.routeName, ...metadataRouter.routeHandlers);
+app.get(metadataByIdRouter.routeName, ...metadataByIdRouter.routeHandlers);
 app.post(uploadRouter.routeName, ...uploadRouter.routeHandlers);
 app.use(uploadErrorHandler);
 

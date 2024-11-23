@@ -16,8 +16,7 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     const isPhoto = file.mimetype.startsWith("image/");
     const isViceo = file.mimetype.startsWith("video/");
-    const isAllowedType = isPhoto || isViceo;
-    if (isAllowedType) {
+    if (isPhoto || isViceo) {
       cb(null, true);
     } else {
       cb(new Error("Invalid file type. Only photos and videos are allowed."));
@@ -43,8 +42,9 @@ const uploadHandler: RequestHandler = async (req, res) => {
     res.status(200).json({
       message: "File uploaded successfully.",
       body: {
-        originalName: file.originalname,
-        mimeType: file.mimetype,
+        filekey: file.filename,
+        filename: file.originalname,
+        mime_type: file.mimetype,
         size: file.size,
       },
     });
