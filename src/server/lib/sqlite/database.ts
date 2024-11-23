@@ -10,12 +10,13 @@ import {
   HEIGHT,
   ID,
   LATITUDE,
+  lightColumns,
   LONGITUDE,
   Metadata,
   MIME_TYPE,
   NULL,
   schema,
-  TABLE_NAME,
+  METADATA,
   THUMBNAIL,
   UPLOADED,
   WIDTH,
@@ -24,16 +25,9 @@ import {
 const DATABASE_PATH = path.join(__dirname, "../../../../.db");
 const database = new Database(DATABASE_PATH);
 
-const queryAll = (sql: string, ...args: SQLQueryBindings[]) => {
-  return database
-    .prepare<Metadata, SQLQueryBindings[]>(sql)
-    .all(...args)
-    .map((m) => new Metadata(m));
-};
-
 export const init = () => {
   const createTableSql = `
-    CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
+    CREATE TABLE IF NOT EXISTS ${METADATA} (
       ${Object.entries(schema)
         .map((c) => c.join(" "))
         .join(",\n")}
@@ -45,7 +39,7 @@ export const init = () => {
 
 export const insert = (metadata: Metadata) => {
   const sql = `
-    INSERT INTO ${TABLE_NAME} (
+    INSERT INTO ${METADATA} (
       ${FILEKEY},
       ${FILENAME},
       ${FILESIZE},
@@ -83,7 +77,7 @@ export const insert = (metadata: Metadata) => {
 
 export const update = (metadata: Metadata) => {
   const sql = `
-    UPDATE ${TABLE_NAME}
+    UPDATE ${METADATA}
     SET ${FILEKEY} = ?,
         ${FILENAME} = ?,
         ${FILESIZE} = ?,
@@ -97,7 +91,7 @@ export const update = (metadata: Metadata) => {
         ${LONGITUDE} = ?,
         ${CREATED} = ?,
         ${UPLOADED} = ?
-    WHERE id = ?
+    WHERE ${ID} = ?
   `;
 
   return database
@@ -120,8 +114,17 @@ export const update = (metadata: Metadata) => {
     );
 };
 
+const queryAll = (sql: string, ...args: SQLQueryBindings[]) => {
+  return database
+    .prepare<Metadata, SQLQueryBindings[]>(sql)
+    .all(...args)
+    .map((m) => new Metadata(m));
+};
+
+const prepareIs = (value: any) => (value === NULL ? "is" : "=");
+const prepareWhere = (where: string) => (where === "where" ? "and" : where);
 const prepareValue = (value: any) => {
-  // queryable values are string, number and Date.
+  // queryable values are string, number, Date and null.
   if (typeof value === "string") return `'${value}'`;
   else if (typeof value === "number") return value;
   else if (value instanceof Date) return `'${value.toISOString()}'`;
@@ -130,37 +133,33 @@ const prepareValue = (value: any) => {
 };
 
 export const get = (metadata: Partial<Metadata>) => {
-  let sql = `SELECT * FROM ${TABLE_NAME}`;
+  let sql = `SELECT * FROM ${METADATA}`;
   let where = "where";
   Object.keys(metadata).forEach((key) => {
     const value = prepareValue(metadata[key as keyof Metadata]);
     if (value === null) return;
     // ignore when un-indexed id(< 0) is input as query.
     if (key === "id" && (typeof value !== "number" || value < 0)) return;
-    const is = value === NULL ? "is" : "=";
+    const is = prepareIs(value);
     sql += ` ${where} ${key} ${is} ${value}`;
-    if (where === "where") where = "and";
+    where = prepareWhere(where);
   });
-  sql += ` ORDER BY ${UPLOADED}`;
   return queryAll(sql);
 };
 
 export const getAll = () => {
   const sql = `
     SELECT
-    ${Object.keys(schema)
-      .filter((s) => s !== THUMBNAIL)
-      .join(", ")}
-    FROM ${TABLE_NAME}
+    ${lightColumns.join(", ")}
+    FROM ${METADATA}
   `;
   return queryAll(sql);
 };
 
 export const getByFilenameLike = (filename: string) => {
   const sql = `
-    SELECT * FROM ${TABLE_NAME}
+    SELECT ${lightColumns.join(", ")} FROM ${METADATA}
     where ${FILENAME} like '%${filename}%'
-    ORDER BY ${UPLOADED}
   `;
   return queryAll(sql);
 };
@@ -170,10 +169,9 @@ export const getByCreatedDate = (
   lessThanOrEqual: Date
 ) => {
   const sql = `
-    SELECT * FROM ${TABLE_NAME}
+    SELECT ${lightColumns.join(", ")} FROM ${METADATA}
     where datetime(${CREATED}) >= ?
     and datetime(${CREATED}) <= ?
-    ORDER BY ${UPLOADED}
   `;
   const gte = greaterThanOrEqual.toISOString();
   const lte = lessThanOrEqual.toISOString();
@@ -182,18 +180,16 @@ export const getByCreatedDate = (
 
 export const getPhotos = () => {
   const sql = `
-    SELECT * FROM ${TABLE_NAME}
+    SELECT ${lightColumns.join(", ")} FROM ${METADATA}
     where ${MIME_TYPE} like 'image/%'
-    ORDER BY ${UPLOADED}
   `;
   return queryAll(sql);
 };
 
 export const getVideos = () => {
   const sql = `
-    SELECT * FROM ${TABLE_NAME}
+    SELECT ${lightColumns.join(", ")} FROM ${METADATA}
     where ${MIME_TYPE} like 'video/%'
-    ORDER BY ${UPLOADED}
   `;
   return queryAll(sql);
 };

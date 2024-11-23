@@ -69,19 +69,66 @@ export class Metadata {
   };
 }
 
+/**
+ * Table name
+ */
+export const METADATA = "metadata";
+
+/**
+ * Column name
+ */
 export const ID = "id";
+/**
+ * Column name
+ */
 export const FILEKEY = "filekey";
+/**
+ * Column name
+ */
 export const FILENAME = "filename";
+/**
+ * Column name
+ */
 export const FILESIZE = "filesize";
+/**
+ * Column name
+ */
 export const MIME_TYPE = "mime_type";
+/**
+ * Column name
+ */
 export const WIDTH = "width";
+/**
+ * Column name
+ */
 export const HEIGHT = "height";
+/**
+ * Column name
+ */
 export const DURATION = "duration";
+/**
+ * Column name
+ */
 export const THUMBNAIL = "thumbnail";
+/**
+ * Column name
+ */
 export const ALTITUDE = "altitude";
+/**
+ * Column name
+ */
 export const LATITUDE = "latitude";
+/**
+ * Column name
+ */
 export const LONGITUDE = "longitude";
+/**
+ * Column name
+ */
 export const CREATED = "created";
+/**
+ * Column name
+ */
 export const UPLOADED = "uploaded";
 
 export const NULL = "NULL";
@@ -104,4 +151,6 @@ export const schema: Schema = {
   [UPLOADED]: "TEXT NOT NULL",
 };
 
-export const TABLE_NAME = "metadata";
+export const lightColumns = Object.keys(schema).filter(
+  (c) => !schema[c as keyof Metadata].includes("BLOB")
+);
