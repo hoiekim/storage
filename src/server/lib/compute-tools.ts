@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { isNumber, isPotentialDate } from "server";
 import { getExifMetadata } from "./exiftool";
 import { Metadata } from "./sqlite";
 import { getPhotoThumbnail, getVideoThumbnail } from "./thumbnails";
@@ -42,7 +43,7 @@ export const getMetadata = async (
         const thumbnail = await getPhotoThumbnail(filePath);
         res(thumbnail);
       } else if (MIMEType.startsWith("video/")) {
-        const time = typeof Duration === "number" ? (2 * Duration) / 3 : 0;
+        const time = isNumber(Duration) ? (2 * Duration) / 3 : 0;
         const thumbnail = await getVideoThumbnail(filePath, { time });
         res(thumbnail);
       } else {
@@ -58,13 +59,10 @@ export const getMetadata = async (
   const promises = [filesizePromise, thumbnailPromise] as const;
   const [filesize, thumbnail] = await Promise.all(promises);
 
-  const createdDate = new Date(CreateDate as any);
-  const mediaCreatedDate = new Date(MediaCreateDate as any);
-
-  const created = !!createdDate.getTime()
-    ? createdDate
-    : !!mediaCreatedDate?.getTime()
-    ? mediaCreatedDate
+  const created = isPotentialDate(CreateDate)
+    ? new Date(CreateDate as any)
+    : isPotentialDate(MediaCreateDate)
+    ? new Date(MediaCreateDate as any)
     : null;
 
   return new Metadata({

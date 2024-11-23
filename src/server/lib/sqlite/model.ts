@@ -1,3 +1,5 @@
+import { isNull, isNumber, isPotentialDate, isString } from "server";
+
 export class Metadata {
   id: number;
   filekey: string;
@@ -33,26 +35,26 @@ export class Metadata {
   }
 
   static assertType = (o: any, skip: string[] = []) => {
-    if (typeof o !== "object" || o === null) {
+    if (typeof o !== "object" || isNull(o)) {
       throw new Error(`Input is not a valid object: ${o}`);
     }
 
     type TypeMapping = { [x in keyof Metadata]: (e: any) => boolean };
     const typeMapping: TypeMapping = {
-      id: (e) => typeof e === "number",
-      filekey: (e) => typeof e === "string",
-      filename: (e) => typeof e === "string",
-      filesize: (e) => typeof e === "number",
-      mime_type: (e) => typeof e === "string",
-      width: (e) => typeof e === "number" || e === null,
-      height: (e) => typeof e === "number" || e === null,
-      duration: (e) => typeof e === "number" || e === null,
-      thumbnail: (e) => e instanceof Uint8Array || e === null,
-      altitude: (e) => typeof e === "number" || e === null,
-      latitude: (e) => typeof e === "number" || e === null,
-      longitude: (e) => typeof e === "number" || e === null,
-      created: (e) => e === null || !!new Date(e).getTime(),
-      uploaded: (e) => !!new Date(e).getTime(),
+      id: (e) => isNumber(e),
+      filekey: (e) => isString(e),
+      filename: (e) => isString(e),
+      filesize: (e) => isNumber(e),
+      mime_type: (e) => isString(e),
+      width: (e) => isNumber(e) || isNull(e),
+      height: (e) => isNumber(e) || isNull(e),
+      duration: (e) => isNumber(e) || isNull(e),
+      thumbnail: (e) => e instanceof Uint8Array || isNull(e),
+      altitude: (e) => isNumber(e) || isNull(e),
+      latitude: (e) => isNumber(e) || isNull(e),
+      longitude: (e) => isNumber(e) || isNull(e),
+      created: (e) => isNull(e) || isPotentialDate(e),
+      uploaded: (e) => isPotentialDate(e),
     };
 
     const errors = Object.entries(typeMapping).reduce((a, [k, check]) => {
