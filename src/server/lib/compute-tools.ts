@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { isNumber, isPotentialDate } from "server";
 import { getExifMetadata } from "./exiftool";
-import { Metadata } from "./sqlite";
+import { database, Metadata } from "./sqlite";
 import { getPhotoThumbnail, getVideoThumbnail } from "./thumbnails";
 
 export const getMetadata = async (
@@ -36,7 +36,7 @@ export const getMetadata = async (
     }
   });
 
-  const thumbnailPromise = new Promise<Buffer | null>(async (res, rej) => {
+  const thumbnailPromise = new Promise<string | null>(async (res, rej) => {
     if (!createThumbnail) return res(null);
     try {
       if (MIMEType.startsWith("image/")) {
@@ -57,7 +57,7 @@ export const getMetadata = async (
   });
 
   const promises = [filesizePromise, thumbnailPromise] as const;
-  const [filesize, thumbnail] = await Promise.all(promises);
+  const [filesize, thumbnail_id] = await Promise.all(promises);
 
   const created = isPotentialDate(CreateDate)
     ? new Date(CreateDate as any)
@@ -74,11 +74,31 @@ export const getMetadata = async (
     width: ImageWidth || null,
     height: ImageHeight || null,
     duration: Duration || null,
-    thumbnail,
+    thumbnail_id,
     altitude: GPSAltitude || null,
     latitude: GPSLatitude || null,
     longitude: GPSLongitude || null,
     created,
     uploaded: new Date(),
   });
+};
+
+export const getUniqueFilename = (filename: string) => {
+  let result = filename;
+  let existing = database.getMetadata({ filename });
+  while (existing.length) {
+    const ext = path.extname(result);
+    const name = result.slice(0, -ext.length);
+    // Find patthern: "abc(1)", "def (14)" or etc.
+    const match = name.match(/\(\d+\)\s*$/);
+    if (match) {
+      const n = +match[0].slice(1, -1);
+      const nameBase = name.slice(0, match.index);
+      result = `${nameBase.trimEnd()} (${n + 1})${ext}`;
+    } else {
+      result = `${name.trimEnd()} (1)${ext}`;
+    }
+    existing = database.getMetadata({ filename: result });
+  }
+  return result;
 };

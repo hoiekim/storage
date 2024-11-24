@@ -141,3 +141,6 @@ _fix_tools
 # Mac file system
 .DS_Store
 */.DS_Store
+
+# Stored files
+.files

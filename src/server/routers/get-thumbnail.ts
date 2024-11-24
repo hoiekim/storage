@@ -2,16 +2,18 @@ import path from "path";
 import fs, { createReadStream } from "fs";
 import { RequestHandler } from "express";
 import mime from "mime-types";
+import { database } from "server";
+import { Router, THUMBNAILS_DIR } from "./common";
 
-import { PUBLIC_DIR, Router } from "./common";
-
-const FILE_ROUTE = "/file/:id";
-
-const fileHandler: RequestHandler = async (req, res) => {
-  const { id } = req.params;
-  const filePath = path.join(PUBLIC_DIR, id);
+const thumbnailHandler: RequestHandler = async (req, res) => {
+  const { id: idString } = req.params;
+  const id = +idString;
 
   try {
+    const metadata = database.getMetadata({ id: +id });
+    const { thumbnail_id } = metadata[0];
+    if (!thumbnail_id) return;
+    const filePath = path.join(THUMBNAILS_DIR, thumbnail_id);
     const fileStat = await fs.promises.stat(filePath);
     const mimeType = mime.lookup(filePath) || "application/octet-stream";
     res.setHeader("Content-Type", mimeType);
@@ -49,11 +51,15 @@ const fileHandler: RequestHandler = async (req, res) => {
     }
   } catch (err: any) {
     const message = "message" in err ? err.message : "Unknown error";
-    res.status(404).json({ message: `File not found: ${message}` });
+    res.status(404).json({ message: `Thumbnail not found: ${message}` });
+  }
+
+  if (Number.isNaN(id)) {
+    res.status(404).json({ message: `Invalid parameter: ${idString}` });
   }
 };
 
-export const fileRouter: Router = {
-  routeName: FILE_ROUTE,
-  routeHandlers: [fileHandler],
+export const thumbnailRouter: Router = {
+  route: "/thumbnail/:id",
+  handlers: [thumbnailHandler],
 };

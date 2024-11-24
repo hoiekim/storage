@@ -3,15 +3,18 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg";
+import { THUMBNAILS_DIR } from "server/routers";
 
 export const getPhotoThumbnail = async (
   filePath: string,
   { width = 500, silent = false } = {}
 ) => {
   try {
-    const buffer = await sharp(filePath).resize(width, width).toBuffer();
+    const thumbnailId = uuidv4();
+    const outputPath = path.join(THUMBNAILS_DIR, thumbnailId);
+    await sharp(filePath).resize(width, width).toFile(outputPath);
     if (!silent) console.log(`Photo thumbnail created for ${filePath}`);
-    return buffer;
+    return thumbnailId;
   } catch (err) {
     if (!silent) console.error("Error creating photo thumbnail:", err);
     throw err;
@@ -30,12 +33,7 @@ export const getVideoThumbnail = async (
   await new Promise<void>((res, rej) => {
     try {
       ffmpeg(filePath)
-        .screenshots({
-          timestamps: [time],
-          size: `${width}x?`,
-          filename: tempId,
-          folder: TEMP_DIR,
-        })
+        .screenshots({ timestamps: [time], filename: tempId, folder: TEMP_DIR })
         .on("end", () => {
           console.log(`Video thumbnail created for ${filePath}`);
           res();
@@ -49,11 +47,11 @@ export const getVideoThumbnail = async (
     }
   });
 
-  const thumbnail = await getPhotoThumbnail(tempPath, {
+  const thumbnailId = await getPhotoThumbnail(tempPath, {
     width,
     silent: true,
   });
   fs.rmSync(tempPath);
 
-  return thumbnail;
+  return thumbnailId;
 };

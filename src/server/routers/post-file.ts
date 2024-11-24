@@ -2,11 +2,11 @@ import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import express, { RequestHandler } from "express";
 import multer from "multer";
-import { database, getMetadata } from "server";
-import { Router, UPLOAD_DIR } from "./common";
+import { database, getMetadata, getUniqueFilename } from "server";
+import { Router, FILES_DIR } from "./common";
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  destination: (req, file, cb) => cb(null, FILES_DIR),
   filename: (req, file, cb) => cb(null, uuidv4()),
 });
 
@@ -24,8 +24,6 @@ const upload = multer({
   },
 });
 
-const UPLOAD_ROUTE = "/upload";
-
 const uploadHandler: RequestHandler = async (req, res) => {
   const file = req.file;
 
@@ -35,18 +33,14 @@ const uploadHandler: RequestHandler = async (req, res) => {
   }
 
   try {
-    const savedPath = path.join(UPLOAD_DIR, file.filename);
+    const { filename: filekey, originalname: filename } = file;
+    const savedPath = path.join(FILES_DIR, filekey);
     const metadata = await getMetadata(savedPath);
-    metadata.filename = file.originalname;
+    metadata.filename = getUniqueFilename(filename);
     database.insert(metadata);
     res.status(200).json({
       message: "File uploaded successfully.",
-      body: {
-        filekey: file.filename,
-        filename: file.originalname,
-        mime_type: file.mimetype,
-        size: file.size,
-      },
+      body: { ...metadata, thumbnail: null },
     });
   } catch (err: any) {
     const message = "message" in err ? err.message : "Unknown error";
@@ -55,12 +49,11 @@ const uploadHandler: RequestHandler = async (req, res) => {
 };
 
 export const uploadRouter: Router = {
-  routeName: UPLOAD_ROUTE,
-  routeHandlers: [upload.single("file"), uploadHandler],
+  route: "/file",
+  handlers: [upload.single("file"), uploadHandler],
 };
 
-// Error handling for file uploads
-export const uploadErrorHandler = (
+export const errorHandler = (
   err: any,
   req: express.Request,
   res: express.Response,

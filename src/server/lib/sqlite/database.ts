@@ -18,7 +18,7 @@ import {
   NULL,
   schema,
   METADATA,
-  THUMBNAIL,
+  THUMBNAIL_ID,
   UPLOADED,
   WIDTH,
 } from "./model";
@@ -48,13 +48,13 @@ export const insert = (metadata: Metadata) => {
       ${WIDTH},
       ${HEIGHT},
       ${DURATION},
-      ${THUMBNAIL},
+      ${THUMBNAIL_ID},
       ${ALTITUDE},
       ${LATITUDE},
       ${LONGITUDE},
       ${CREATED},
       ${UPLOADED}
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   return database
@@ -67,7 +67,7 @@ export const insert = (metadata: Metadata) => {
       metadata.width && Math.round(metadata.width),
       metadata.height && Math.round(metadata.height),
       metadata.duration,
-      metadata.thumbnail,
+      metadata.thumbnail_id,
       metadata.altitude,
       metadata.latitude,
       metadata.longitude,
@@ -86,7 +86,7 @@ export const update = (metadata: Metadata) => {
         ${WIDTH} = ?,
         ${HEIGHT} = ?,
         ${DURATION} = ?,
-        ${THUMBNAIL} = ?,
+        ${THUMBNAIL_ID} = ?,
         ${ALTITUDE} = ?,
         ${LATITUDE} = ?,
         ${LONGITUDE} = ?,
@@ -105,7 +105,7 @@ export const update = (metadata: Metadata) => {
       metadata.width && Math.round(metadata.width),
       metadata.height && Math.round(metadata.height),
       metadata.duration,
-      metadata.thumbnail,
+      metadata.thumbnail_id,
       metadata.altitude,
       metadata.latitude,
       metadata.longitude,
@@ -115,15 +115,6 @@ export const update = (metadata: Metadata) => {
     );
 };
 
-const queryAll = (sql: string, ...args: SQLQueryBindings[]) => {
-  return database
-    .prepare<Metadata, SQLQueryBindings[]>(sql)
-    .all(...args)
-    .map((m) => new Metadata(m));
-};
-
-const prepareWhere = (where?: string) => (where === "WHERE" ? "AND" : "WHERE");
-const prepareIs = (value: any) => (value === NULL ? "IS" : "=");
 const prepareValue = (value: any) => {
   // queryable values are string, number, Date and null.
   if (isString(value)) return `'${value}'`;
@@ -133,22 +124,53 @@ const prepareValue = (value: any) => {
   else return undefined;
 };
 
-export const get = (metadata: Partial<Metadata>) => {
-  let sql = `SELECT * FROM ${METADATA}`;
-  let where: string;
+const prepareQuery = (metadata: Partial<Metadata>) => {
+  const queries: string[] = [];
   Object.entries(metadata).forEach(([key, v]) => {
     const value = prepareValue(v);
     // ignore when un-indexed id(< 0) is input as query.
     if (key === ID && (!isNumber(value) || value < 0)) return;
     if (!isDefined(value)) return;
-    where = prepareWhere(where);
-    const is = prepareIs(value);
-    sql += ` ${where} ${key} ${is} ${value}`;
+    const where = !queries.length ? "where" : "and";
+    const is = value === NULL ? "IS" : "=";
+    queries.push(`${where} ${key} ${is} ${value}`);
   });
+  return queries.join("\n");
+};
+
+export const remove = (metadata: Partial<Metadata>) => {
+  const query = prepareQuery(metadata);
+  const sql = `
+    DELETE FROM ${METADATA}
+    ${query}
+  `;
   return queryAll(sql);
 };
 
-export const getAll = () => {
+const queryAll = (sql: string, ...args: SQLQueryBindings[]) => {
+  return database
+    .prepare<Metadata, SQLQueryBindings[]>(sql)
+    .all(...args)
+    .map((m) => {
+      const nullified: any = { ...m };
+      Object.keys(schema).forEach((c) => {
+        if (!isDefined(nullified[c])) nullified[c] = null;
+      });
+      return new Metadata(nullified);
+    });
+};
+
+export const getMetadata = (metadata: Partial<Metadata>) => {
+  const query = prepareQuery(metadata);
+  const sql = `
+    SELECT ${lightColumns.join(", ")}
+    FROM ${METADATA}
+    ${query}
+  `;
+  return queryAll(sql);
+};
+
+export const getAllMetadata = () => {
   const sql = `
     SELECT ${lightColumns.join(", ")}
     FROM ${METADATA}
@@ -156,7 +178,7 @@ export const getAll = () => {
   return queryAll(sql);
 };
 
-export const getByFilenameLike = (filename: string) => {
+export const getMetadataByFilenameLike = (filename: string) => {
   const sql = `
     SELECT ${lightColumns.join(", ")}
     FROM ${METADATA}
@@ -165,7 +187,7 @@ export const getByFilenameLike = (filename: string) => {
   return queryAll(sql);
 };
 
-export const getByCreatedDate = (
+export const getMetadataByCreatedDate = (
   greaterThanOrEqual: Date,
   lessThanOrEqual: Date
 ) => {
@@ -180,7 +202,7 @@ export const getByCreatedDate = (
   return queryAll(sql, gte, lte);
 };
 
-export const getPhotos = () => {
+export const getAllPhotoMetadata = () => {
   const sql = `
     SELECT ${lightColumns.join(", ")}
     FROM ${METADATA}
@@ -189,7 +211,7 @@ export const getPhotos = () => {
   return queryAll(sql);
 };
 
-export const getVideos = () => {
+export const getAllVideoMetadata = () => {
   const sql = `
     SELECT ${lightColumns.join(", ")}
     FROM ${METADATA}

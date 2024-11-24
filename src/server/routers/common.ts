@@ -1,10 +1,10 @@
 import { RequestHandler } from "express";
 import path from "path";
 
-export const PUBLIC_DIR = path.join(__dirname, "../../../public");
-export const UPLOAD_DIR = PUBLIC_DIR;
+export const FILES_DIR = path.join(__dirname, "../../../.files");
+export const THUMBNAILS_DIR = path.join(FILES_DIR, "thumbnails");
 
 export interface Router {
-  routeName: string;
-  routeHandlers: RequestHandler[];
+  route: string;
+  handlers: RequestHandler[];
 }
