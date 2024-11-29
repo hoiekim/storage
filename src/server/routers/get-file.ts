@@ -1,19 +1,21 @@
 import path from "path";
 import fs, { createReadStream } from "fs";
 import { RequestHandler } from "express";
-import mime from "mime-types";
 import { database } from "server";
 import { FILES_DIR, Router } from "./common";
 
 const getFileHandler: RequestHandler = async (req, res) => {
-  const { id } = req.params;
+  const { filekey } = req.params;
 
   try {
-    const metadata = database.getMetadata({ id: +id });
-    const { filekey } = metadata[0];
     const filePath = path.join(FILES_DIR, filekey);
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`Invalid parameter: ${filekey}`);
+    }
+
     const fileStat = await fs.promises.stat(filePath);
-    const mimeType = mime.lookup(filePath) || "application/octet-stream";
+    const metadata = database.getMetadata({ filekey });
+    const mimeType = metadata[0]["mime_type"];
     res.setHeader("Content-Type", mimeType);
     res.setHeader("Content-Length", fileStat.size);
     res.setHeader("Accept-Ranges", "bytes");
@@ -30,6 +32,14 @@ const getFileHandler: RequestHandler = async (req, res) => {
       const chunkEnd = isNaN(end)
         ? fileStat.size - 1
         : Math.min(end, fileStat.size - 1);
+
+      if (chunkStart > chunkEnd) {
+        // Invalid range
+        res.status(416);
+        res.setHeader("Content-Range", `bytes */${fileStat.size}`);
+        res.end();
+        return;
+      }
 
       res.status(206); // Partial Content
       res.setHeader(
@@ -54,6 +64,6 @@ const getFileHandler: RequestHandler = async (req, res) => {
 };
 
 export const getFileRouter: Router = {
-  route: "/file/:id",
+  route: "/file/:filekey",
   handlers: [getFileHandler],
 };

@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { RequestHandler } from "express";
 import { database } from "server";
-import { FILES_DIR, Router } from "./common";
+import { FILES_DIR, Router, THUMBNAILS_DIR } from "./common";
 
 const deleteHandler: RequestHandler = async (req, res) => {
   const { id: idString } = req.params;
@@ -19,6 +19,8 @@ const deleteHandler: RequestHandler = async (req, res) => {
         metadata.forEach(({ filekey }) => {
           const filePath = path.join(FILES_DIR, filekey);
           if (fs.existsSync(filePath)) fs.rmSync(filePath);
+          const thumbnailPath = path.join(THUMBNAILS_DIR, filekey);
+          if (fs.existsSync(thumbnailPath)) fs.rmSync(thumbnailPath);
         });
       }
       res.status(200).json({ message: `Deleted: ${id}` });

@@ -6,6 +6,7 @@ import {
   metadataRouter,
   errorHandler,
   uploadRouter,
+  uploadWithItemIdRouter,
   allMetadataRouter,
   deleteRouter,
 } from "./routers";
@@ -24,6 +25,7 @@ app.get(thumbnailRouter.route, ...thumbnailRouter.handlers);
 app.get(getFileRouter.route, ...getFileRouter.handlers);
 app.delete(deleteRouter.route, ...deleteRouter.handlers);
 app.post(uploadRouter.route, ...uploadRouter.handlers);
+app.post(uploadWithItemIdRouter.route, ...uploadWithItemIdRouter.handlers);
 app.use(errorHandler);
 
 app.use("*", (req, res) => {

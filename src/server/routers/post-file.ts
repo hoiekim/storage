@@ -1,8 +1,9 @@
 import path from "path";
+import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import express, { RequestHandler } from "express";
 import multer from "multer";
-import { database, getMetadata, getUniqueFilename } from "server";
+import { database, getMetadata, getUniqueFilename, Metadata } from "server";
 import { Router, FILES_DIR } from "./common";
 
 const storage = multer.diskStorage({
@@ -12,7 +13,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 1024 * 1024 * 1024 }, // 1GB limit
+  limits: { fileSize: 10 * 1024 * 1024 * 1024 }, // 10GB limit
   fileFilter: (req, file, cb) => {
     const isPhoto = file.mimetype.startsWith("image/");
     const isViceo = file.mimetype.startsWith("video/");
@@ -26,6 +27,7 @@ const upload = multer({
 
 const uploadHandler: RequestHandler = async (req, res) => {
   const file = req.file;
+  const { itemId } = req.params;
 
   if (!file) {
     res.status(400).json({ message: "No file uploaded." });
@@ -35,12 +37,24 @@ const uploadHandler: RequestHandler = async (req, res) => {
   try {
     const { filename: filekey, originalname: filename } = file;
     const savedPath = path.join(FILES_DIR, filekey);
-    const metadata = await getMetadata(savedPath);
+
+    const existing = itemId && database.getMetadata({ item_id: itemId });
+    if (existing?.length) {
+      fs.rmSync(savedPath);
+      res.status(200).json({
+        message: "Skipped because this file is already uploaded.",
+        body: existing,
+      });
+    }
+
+    const override: Partial<Metadata> = {};
+    if (itemId) override.item_id = itemId;
+    const metadata = await getMetadata(savedPath, { override });
     metadata.filename = getUniqueFilename(filename);
     database.insert(metadata);
     res.status(200).json({
       message: "File uploaded successfully.",
-      body: { ...metadata, thumbnail: null },
+      body: metadata,
     });
   } catch (err: any) {
     const message = "message" in err ? err.message : "Unknown error";
@@ -50,6 +64,11 @@ const uploadHandler: RequestHandler = async (req, res) => {
 
 export const uploadRouter: Router = {
   route: "/file",
+  handlers: [upload.single("file"), uploadHandler],
+};
+
+export const uploadWithItemIdRouter: Router = {
+  route: "/file/:itemId",
   handlers: [upload.single("file"), uploadHandler],
 };
 

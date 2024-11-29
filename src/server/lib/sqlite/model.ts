@@ -6,10 +6,10 @@ export class Metadata {
   filename: string;
   filesize: number;
   mime_type: string;
+  item_id: string | null;
   width: number | null;
   height: number | null;
   duration: number | null;
-  thumbnail_id: string | null;
   altitude: number | null;
   latitude: number | null;
   longitude: number | null;
@@ -23,10 +23,10 @@ export class Metadata {
     this.filename = m.filename;
     this.filesize = m.filesize;
     this.mime_type = m.mime_type;
+    this.item_id = m.item_id;
     this.width = m.width;
     this.height = m.height;
     this.duration = m.duration;
-    this.thumbnail_id = m.thumbnail_id;
     this.altitude = m.altitude;
     this.latitude = m.latitude;
     this.longitude = m.longitude;
@@ -41,20 +41,20 @@ export class Metadata {
 
     type Checker = { [x in keyof Metadata]: (e: any) => boolean };
     const checker: Checker = {
-      id: (e) => isNumber(e),
-      filekey: (e) => isString(e),
-      filename: (e) => isString(e),
-      filesize: (e) => isNumber(e),
-      mime_type: (e) => isString(e),
+      id: isNumber,
+      filekey: isString,
+      filename: isString,
+      filesize: isNumber,
+      mime_type: isString,
+      item_id: (e) => isString(e) || isNull(e),
       width: (e) => isNumber(e) || isNull(e),
       height: (e) => isNumber(e) || isNull(e),
       duration: (e) => isNumber(e) || isNull(e),
-      thumbnail_id: (e) => isString(e) || isNull(e),
       altitude: (e) => isNumber(e) || isNull(e),
       latitude: (e) => isNumber(e) || isNull(e),
       longitude: (e) => isNumber(e) || isNull(e),
       created: (e) => isPotentialDate(e) || isNull(e),
-      uploaded: (e) => isPotentialDate(e),
+      uploaded: isPotentialDate,
     };
 
     const errors = Object.entries(checker).reduce((a, [k, check]) => {
@@ -78,10 +78,10 @@ export const FILEKEY = "filekey";
 export const FILENAME = "filename";
 export const FILESIZE = "filesize";
 export const MIME_TYPE = "mime_type";
+export const ITEM_ID = "item_id";
 export const WIDTH = "width";
 export const HEIGHT = "height";
 export const DURATION = "duration";
-export const THUMBNAIL_ID = "thumbnail_id";
 export const ALTITUDE = "altitude";
 export const LATITUDE = "latitude";
 export const LONGITUDE = "longitude";
@@ -97,10 +97,10 @@ export const schema: Schema = {
   [FILENAME]: "TEXT NOT NULL",
   [FILESIZE]: "INTEGER NOT NULL",
   [MIME_TYPE]: "TEXT NOT NULL",
+  [ITEM_ID]: "TEXT",
   [WIDTH]: "INTEGER",
   [HEIGHT]: "INTEGER",
   [DURATION]: "REAL",
-  [THUMBNAIL_ID]: "TEXT",
   [ALTITUDE]: "REAL",
   [LATITUDE]: "REAL",
   [LONGITUDE]: "REAL",

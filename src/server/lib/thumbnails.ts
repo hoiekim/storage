@@ -7,14 +7,16 @@ import { THUMBNAILS_DIR } from "server/routers";
 
 export const getPhotoThumbnail = async (
   filePath: string,
-  { width = 500, silent = false } = {}
+  { width = 300, silent = false } = {}
 ) => {
   try {
-    const thumbnailId = uuidv4();
-    const outputPath = path.join(THUMBNAILS_DIR, thumbnailId);
-    await sharp(filePath).resize(width, width).toFile(outputPath);
+    const filename = path.basename(filePath);
+    const ext = path.extname(filename);
+    const filekey = filename.slice(0, -ext.length);
+    const outputPath = path.join(THUMBNAILS_DIR, filekey);
+    await sharp(filePath).jpeg().resize(width, width).toFile(outputPath);
     if (!silent) console.log(`Photo thumbnail created for ${filePath}`);
-    return thumbnailId;
+    return filekey;
   } catch (err) {
     if (!silent) console.error("Error creating photo thumbnail:", err);
     throw err;
@@ -25,15 +27,21 @@ const TEMP_DIR = path.join(__dirname, "../../../.temp");
 
 export const getVideoThumbnail = async (
   filePath: string,
-  { width = 500, time = 0 } = {}
+  { width = 300, time = 0 } = {}
 ) => {
-  const tempId = uuidv4();
-  const tempPath = path.join(TEMP_DIR, `${tempId}.png`);
+  const filename = path.basename(filePath);
+  const ext = path.extname(filename);
+  const _filekey = ext.length ? filename.slice(0, -ext.length) : filename;
+  const tempPath = path.join(TEMP_DIR, `${_filekey}.png`);
 
   await new Promise<void>((res, rej) => {
     try {
       ffmpeg(filePath)
-        .screenshots({ timestamps: [time], filename: tempId, folder: TEMP_DIR })
+        .screenshots({
+          timestamps: [time],
+          filename: _filekey,
+          folder: TEMP_DIR,
+        })
         .on("end", () => {
           console.log(`Video thumbnail created for ${filePath}`);
           res();
@@ -47,11 +55,8 @@ export const getVideoThumbnail = async (
     }
   });
 
-  const thumbnailId = await getPhotoThumbnail(tempPath, {
-    width,
-    silent: true,
-  });
+  const filekey = await getPhotoThumbnail(tempPath, { width, silent: true });
   fs.rmSync(tempPath);
 
-  return thumbnailId;
+  return filekey;
 };

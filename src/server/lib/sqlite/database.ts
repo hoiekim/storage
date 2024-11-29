@@ -18,7 +18,6 @@ import {
   NULL,
   schema,
   METADATA,
-  THUMBNAIL_ID,
   UPLOADED,
   WIDTH,
 } from "./model";
@@ -48,13 +47,12 @@ export const insert = (metadata: Metadata) => {
       ${WIDTH},
       ${HEIGHT},
       ${DURATION},
-      ${THUMBNAIL_ID},
       ${ALTITUDE},
       ${LATITUDE},
       ${LONGITUDE},
       ${CREATED},
       ${UPLOADED}
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   return database
@@ -67,7 +65,6 @@ export const insert = (metadata: Metadata) => {
       metadata.width && Math.round(metadata.width),
       metadata.height && Math.round(metadata.height),
       metadata.duration,
-      metadata.thumbnail_id,
       metadata.altitude,
       metadata.latitude,
       metadata.longitude,
@@ -86,7 +83,6 @@ export const update = (metadata: Metadata) => {
         ${WIDTH} = ?,
         ${HEIGHT} = ?,
         ${DURATION} = ?,
-        ${THUMBNAIL_ID} = ?,
         ${ALTITUDE} = ?,
         ${LATITUDE} = ?,
         ${LONGITUDE} = ?,
@@ -105,7 +101,6 @@ export const update = (metadata: Metadata) => {
       metadata.width && Math.round(metadata.width),
       metadata.height && Math.round(metadata.height),
       metadata.duration,
-      metadata.thumbnail_id,
       metadata.altitude,
       metadata.latitude,
       metadata.longitude,

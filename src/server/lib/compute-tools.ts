@@ -5,12 +5,18 @@ import { getExifMetadata } from "./exiftool";
 import { database, Metadata } from "./sqlite";
 import { getPhotoThumbnail, getVideoThumbnail } from "./thumbnails";
 
+interface GetMetadatOption {
+  override?: Partial<Metadata>;
+  createThumbnail?: boolean;
+}
+
 export const getMetadata = async (
   filePath: string,
-  createThumbnail = true
+  option: GetMetadatOption = {}
 ): Promise<Metadata> => {
-  const filekey = path.basename(filePath);
+  const { override, createThumbnail = true } = option;
 
+  const filekey = path.basename(filePath);
   const exif = await getExifMetadata(filePath);
 
   const {
@@ -57,7 +63,7 @@ export const getMetadata = async (
   });
 
   const promises = [filesizePromise, thumbnailPromise] as const;
-  const [filesize, thumbnail_id] = await Promise.all(promises);
+  const [filesize, _] = await Promise.all(promises);
 
   const created = isPotentialDate(CreateDate)
     ? new Date(CreateDate as any)
@@ -71,15 +77,16 @@ export const getMetadata = async (
     filename: FileName,
     filesize,
     mime_type: MIMEType,
+    item_id: null,
     width: ImageWidth || null,
     height: ImageHeight || null,
     duration: Duration || null,
-    thumbnail_id,
     altitude: GPSAltitude || null,
     latitude: GPSLatitude || null,
     longitude: GPSLongitude || null,
     created,
     uploaded: new Date(),
+    ...override,
   });
 };
 
