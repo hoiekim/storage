@@ -45,6 +45,7 @@ const uploadHandler: RequestHandler = async (req, res) => {
         message: "Skipped because this file is already uploaded.",
         body: existing,
       });
+      return;
     }
 
     const override: Partial<Metadata> = {};

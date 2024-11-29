@@ -1,6 +1,5 @@
 import path from "path";
 import fs from "fs";
-import { v4 as uuidv4 } from "uuid";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg";
 import { THUMBNAILS_DIR } from "server/routers";
@@ -12,7 +11,7 @@ export const getPhotoThumbnail = async (
   try {
     const filename = path.basename(filePath);
     const ext = path.extname(filename);
-    const filekey = filename.slice(0, -ext.length);
+    const filekey = ext.length ? filename.slice(0, -ext.length) : filename;
     const outputPath = path.join(THUMBNAILS_DIR, filekey);
     await sharp(filePath).jpeg().resize(width, width).toFile(outputPath);
     if (!silent) console.log(`Photo thumbnail created for ${filePath}`);

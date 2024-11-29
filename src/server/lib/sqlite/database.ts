@@ -20,6 +20,7 @@ import {
   METADATA,
   UPLOADED,
   WIDTH,
+  ITEM_ID,
 } from "./model";
 
 const DATABASE_PATH = path.join(__dirname, "../../../../.db");
@@ -44,6 +45,7 @@ export const insert = (metadata: Metadata) => {
       ${FILENAME},
       ${FILESIZE},
       ${MIME_TYPE},
+      ${ITEM_ID},
       ${WIDTH},
       ${HEIGHT},
       ${DURATION},
@@ -52,7 +54,7 @@ export const insert = (metadata: Metadata) => {
       ${LONGITUDE},
       ${CREATED},
       ${UPLOADED}
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   return database
@@ -62,6 +64,7 @@ export const insert = (metadata: Metadata) => {
       metadata.filename,
       Math.round(metadata.filesize),
       metadata.mime_type,
+      metadata.item_id,
       metadata.width && Math.round(metadata.width),
       metadata.height && Math.round(metadata.height),
       metadata.duration,
@@ -80,6 +83,7 @@ export const update = (metadata: Metadata) => {
         ${FILENAME} = ?,
         ${FILESIZE} = ?,
         ${MIME_TYPE} = ?,
+        ${ITEM_ID} = ?,
         ${WIDTH} = ?,
         ${HEIGHT} = ?,
         ${DURATION} = ?,
@@ -98,6 +102,7 @@ export const update = (metadata: Metadata) => {
       metadata.filename,
       Math.round(metadata.filesize),
       metadata.mime_type,
+      metadata.item_id,
       metadata.width && Math.round(metadata.width),
       metadata.height && Math.round(metadata.height),
       metadata.duration,
