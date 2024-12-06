@@ -42,7 +42,6 @@ export const getVideoThumbnail = async (
           folder: TEMP_DIR,
         })
         .on("end", () => {
-          console.log(`Video thumbnail created for ${filePath}`);
           res();
         })
         .on("error", (err) => {
@@ -56,6 +55,8 @@ export const getVideoThumbnail = async (
 
   const filekey = await getPhotoThumbnail(tempPath, { width, silent: true });
   fs.rmSync(tempPath);
+
+  console.log(`Video thumbnail created for ${filePath}`);
 
   return filekey;
 };

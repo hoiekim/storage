@@ -31,6 +31,7 @@ export const getMetadata = async (
     GPSLongitude,
     CreateDate,
     MediaCreateDate,
+    CreationDate,
   } = exif;
 
   const filesizePromise = new Promise<number>(async (res, rej) => {
@@ -66,11 +67,13 @@ export const getMetadata = async (
   const promises = [filesizePromise, thumbnailPromise] as const;
   const [filesize, _] = await Promise.all(promises);
 
-  const created = isPotentialDate(CreateDate)
-    ? new Date(CreateDate as any)
-    : isPotentialDate(MediaCreateDate)
-    ? new Date(MediaCreateDate as any)
-    : null;
+  const createdDate1 = new Date(CreateDate as any);
+  const createdDate2 = new Date(MediaCreateDate as any);
+  const createdDate3 = new Date(CreationDate as any);
+
+  const created = [createdDate1, createdDate2, createdDate3]
+    .filter((d) => !!d.getTime())
+    .reduce((acc, d) => (acc < d ? acc : d), new Date());
 
   return new Metadata({
     id: -1,
