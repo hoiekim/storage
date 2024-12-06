@@ -70,7 +70,9 @@ export const init = () => {
     const api_key = uuidv4();
     const username = ADMIN;
     insertUser(new User({ id: -1, username, api_key, created: new Date() }));
-    console.log(`Successfully created user\n-> username: ${username}\n-> api_key: ${api_key}`);
+    console.log(
+      `Successfully created user\n-> username: ${username}\n-> api_key: ${api_key}`
+    );
   }
 
   console.log("Successfully initialized database.");
@@ -229,7 +231,10 @@ export const getMetadataByFilenameLike = (filename: string) => {
   return queryMetadata(sql);
 };
 
-export const getMetadataByCreatedDate = (greaterThanOrEqual: Date, lessThanOrEqual: Date) => {
+export const getMetadataByCreatedDate = (
+  greaterThanOrEqual: Date,
+  lessThanOrEqual: Date
+) => {
   const sql = `
     SELECT ${lightColumns.join(", ")}
     FROM ${METADATA}
@@ -268,7 +273,9 @@ export const insertUser = (user: User) => {
     ) VALUES (?, ?, ?)
   `;
 
-  return database.prepare(sql).run(user.username, user.api_key, user.created.toISOString());
+  return database
+    .prepare(sql)
+    .run(user.username, user.api_key, user.created.toISOString());
 };
 
 const queryUser = (sql: string, ...args: SQLQueryBindings[]) => {

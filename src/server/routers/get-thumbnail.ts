@@ -6,6 +6,7 @@ import { THUMBNAILS_DIR, Router } from "./common";
 
 const thumbnailHandler: RequestHandler = async (req, res) => {
   const { filekey } = req.params;
+  const user = req.user!;
 
   try {
     const filePath = path.join(THUMBNAILS_DIR, filekey);
@@ -14,7 +15,7 @@ const thumbnailHandler: RequestHandler = async (req, res) => {
     }
 
     const fileStat = await fs.promises.stat(filePath);
-    const metadata = database.getMetadata({ filekey });
+    const metadata = database.getMetadata({ filekey, user_id: user.id });
     const mimeType = metadata[0]["mime_type"];
     res.setHeader("Content-Type", mimeType);
     res.setHeader("Content-Length", fileStat.size);

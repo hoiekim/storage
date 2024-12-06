@@ -7,15 +7,17 @@ import { FILES_DIR, Router, THUMBNAILS_DIR } from "./common";
 const deleteHandler: RequestHandler = async (req, res) => {
   const { id: idString } = req.params;
   const id = +idString;
+  const user = req.user!;
+
   if (Number.isNaN(id)) {
     res.status(404).json({ message: `Invalid parameter: ${id}` });
   } else {
     try {
-      const metadata = database.getMetadata({ id });
+      const metadata = database.getMetadata({ id, user_id: user.id });
       if (!metadata.length) {
         res.status(404).json({ message: `Metadata not found: ${id}` });
       } else {
-        database.removeMetadata({ id });
+        database.removeMetadata({ id, user_id: user.id });
         metadata.forEach(({ filekey }) => {
           const filePath = path.join(FILES_DIR, filekey);
           if (fs.existsSync(filePath)) fs.rmSync(filePath);

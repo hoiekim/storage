@@ -28,6 +28,7 @@ const upload = multer({
 const uploadHandler: RequestHandler = async (req, res) => {
   const file = req.file;
   const { itemId } = req.params;
+  const user = req.user!;
 
   if (!file) {
     res.status(400).json({ message: "No file uploaded." });
@@ -38,7 +39,8 @@ const uploadHandler: RequestHandler = async (req, res) => {
     const { filename: filekey, originalname: filename } = file;
     const savedPath = path.join(FILES_DIR, filekey);
 
-    const existing = itemId && database.getMetadata({ item_id: itemId });
+    const existing =
+      itemId && database.getMetadata({ item_id: itemId, user_id: user.id });
     if (existing?.length) {
       fs.rmSync(savedPath);
       res.status(200).json({
@@ -50,8 +52,7 @@ const uploadHandler: RequestHandler = async (req, res) => {
 
     const override: Partial<Metadata> = {};
     if (itemId) override.item_id = itemId;
-    const userId = req.user!.id;
-    const metadata = await getMetadata(userId, savedPath, { override });
+    const metadata = await getMetadata(user.id, savedPath, { override });
     metadata.filename = getUniqueFilename(filename);
     database.insertMetadata(metadata);
     res.status(200).json({
