@@ -50,9 +50,10 @@ const uploadHandler: RequestHandler = async (req, res) => {
 
     const override: Partial<Metadata> = {};
     if (itemId) override.item_id = itemId;
-    const metadata = await getMetadata(savedPath, { override });
+    const userId = req.user!.id;
+    const metadata = await getMetadata(userId, savedPath, { override });
     metadata.filename = getUniqueFilename(filename);
-    database.insert(metadata);
+    database.insertMetadata(metadata);
     res.status(200).json({
       message: "File uploaded successfully.",
       body: metadata,

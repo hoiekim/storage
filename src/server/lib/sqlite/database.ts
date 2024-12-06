@@ -1,5 +1,6 @@
 import path from "path";
 import { Database, SQLQueryBindings } from "bun:sqlite";
+import { v4 as uuidv4 } from "uuid";
 import { isDate, isDefined, isNull, isNumber, isString } from "server";
 import {
   ALTITUDE,
@@ -16,31 +17,69 @@ import {
   Metadata,
   MIME_TYPE,
   NULL,
-  schema,
+  metadataSchema,
   METADATA,
   UPLOADED,
   WIDTH,
   ITEM_ID,
-} from "./model";
+  User,
+  USER,
+  metadataConstraints,
+  userSchema,
+  API_KEY,
+  USERNAME,
+  ADMIN,
+  USER_ID,
+} from "./models";
 
 const DATABASE_PATH = path.join(__dirname, "../../../../.db");
 const database = new Database(DATABASE_PATH);
 
-export const init = () => {
-  const createTableSql = `
-    CREATE TABLE IF NOT EXISTS ${METADATA} (
+type Schema = { [k: string]: string };
+type Constarints = string[];
+
+const getTableCreationQuery = (
+  tableName: string,
+  schema: Schema,
+  constraints: Constarints = []
+) => {
+  return `
+    CREATE TABLE IF NOT EXISTS ${tableName} (
       ${Object.entries(schema)
-        .map((c) => c.join(" "))
+        .map(([column, description]) => `${column} ${description}`)
+        .concat(constraints)
         .join(",\n")}
     ) STRICT
   `;
-  database.exec(createTableSql);
+};
+
+export const init = () => {
+  const createMetadataTableSql = getTableCreationQuery(
+    METADATA,
+    metadataSchema,
+    metadataConstraints
+  );
+  database.exec(createMetadataTableSql);
+
+  const createUserTableSql = getTableCreationQuery(USER, userSchema);
+  database.exec(createUserTableSql);
+
+  const allUsers = queryUser(`SELECT * from ${USER}`);
+  if (!allUsers.length) {
+    console.log("No users found in the database. Creating admin user...");
+    const api_key = uuidv4();
+    const username = ADMIN;
+    insertUser(new User({ id: -1, username, api_key, created: new Date() }));
+    console.log(`Successfully created user\n-> username: ${username}\n-> api_key: ${api_key}`);
+  }
+
   console.log("Successfully initialized database.");
 };
 
-export const insert = (metadata: Metadata) => {
+export const insertMetadata = (metadata: Metadata) => {
   const sql = `
     INSERT INTO ${METADATA} (
+      ${USER_ID},
       ${FILEKEY},
       ${FILENAME},
       ${FILESIZE},
@@ -54,12 +93,13 @@ export const insert = (metadata: Metadata) => {
       ${LONGITUDE},
       ${CREATED},
       ${UPLOADED}
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   return database
     .prepare(sql)
     .run(
+      metadata.user_id,
       metadata.filekey,
       metadata.filename,
       Math.round(metadata.filesize),
@@ -76,10 +116,11 @@ export const insert = (metadata: Metadata) => {
     );
 };
 
-export const update = (metadata: Metadata) => {
+export const updateMetadata = (metadata: Metadata) => {
   const sql = `
     UPDATE ${METADATA}
-    SET ${FILEKEY} = ?,
+    SET ${USER_ID} = ?,
+        ${FILEKEY} = ?,
         ${FILENAME} = ?,
         ${FILESIZE} = ?,
         ${MIME_TYPE} = ?,
@@ -98,6 +139,7 @@ export const update = (metadata: Metadata) => {
   return database
     .prepare(sql)
     .run(
+      metadata.user_id,
       metadata.filekey,
       metadata.filename,
       Math.round(metadata.filesize),
@@ -124,7 +166,7 @@ const prepareValue = (value: any) => {
   else return undefined;
 };
 
-const prepareQuery = (metadata: Partial<Metadata>) => {
+const prepareQuery = (metadata: Partial<Metadata> | Partial<User>) => {
   const queries: string[] = [];
   Object.entries(metadata).forEach(([key, v]) => {
     const value = prepareValue(v);
@@ -138,26 +180,26 @@ const prepareQuery = (metadata: Partial<Metadata>) => {
   return queries.join("\n");
 };
 
-export const remove = (metadata: Partial<Metadata>) => {
-  const query = prepareQuery(metadata);
-  const sql = `
-    DELETE FROM ${METADATA}
-    ${query}
-  `;
-  return queryAll(sql);
-};
-
-const queryAll = (sql: string, ...args: SQLQueryBindings[]) => {
+const queryMetadata = (sql: string, ...args: SQLQueryBindings[]) => {
   return database
     .prepare<Metadata, SQLQueryBindings[]>(sql)
     .all(...args)
     .map((m) => {
       const nullified: any = { ...m };
-      Object.keys(schema).forEach((c) => {
+      Object.keys(metadataSchema).forEach((c) => {
         if (!isDefined(nullified[c])) nullified[c] = null;
       });
       return new Metadata(nullified);
     });
+};
+
+export const removeMetadata = (metadata: Partial<Metadata>) => {
+  const query = prepareQuery(metadata);
+  const sql = `
+    DELETE FROM ${METADATA}
+    ${query}
+  `;
+  return queryMetadata(sql);
 };
 
 export const getMetadata = (metadata: Partial<Metadata>) => {
@@ -167,7 +209,7 @@ export const getMetadata = (metadata: Partial<Metadata>) => {
     FROM ${METADATA}
     ${query}
   `;
-  return queryAll(sql);
+  return queryMetadata(sql);
 };
 
 export const getAllMetadata = () => {
@@ -175,7 +217,7 @@ export const getAllMetadata = () => {
     SELECT ${lightColumns.join(", ")}
     FROM ${METADATA}
   `;
-  return queryAll(sql);
+  return queryMetadata(sql);
 };
 
 export const getMetadataByFilenameLike = (filename: string) => {
@@ -184,13 +226,10 @@ export const getMetadataByFilenameLike = (filename: string) => {
     FROM ${METADATA}
     WHERE ${FILENAME} LIKE '%${filename}%'
   `;
-  return queryAll(sql);
+  return queryMetadata(sql);
 };
 
-export const getMetadataByCreatedDate = (
-  greaterThanOrEqual: Date,
-  lessThanOrEqual: Date
-) => {
+export const getMetadataByCreatedDate = (greaterThanOrEqual: Date, lessThanOrEqual: Date) => {
   const sql = `
     SELECT ${lightColumns.join(", ")}
     FROM ${METADATA}
@@ -199,7 +238,7 @@ export const getMetadataByCreatedDate = (
   `;
   const gte = greaterThanOrEqual.toISOString();
   const lte = lessThanOrEqual.toISOString();
-  return queryAll(sql, gte, lte);
+  return queryMetadata(sql, gte, lte);
 };
 
 export const getAllPhotoMetadata = () => {
@@ -208,7 +247,7 @@ export const getAllPhotoMetadata = () => {
     FROM ${METADATA}
     WHERE ${MIME_TYPE} LIKE 'image/%'
   `;
-  return queryAll(sql);
+  return queryMetadata(sql);
 };
 
 export const getAllVideoMetadata = () => {
@@ -217,5 +256,44 @@ export const getAllVideoMetadata = () => {
     FROM ${METADATA}
     WHERE ${MIME_TYPE} LIKE 'video/%'
   `;
-  return queryAll(sql);
+  return queryMetadata(sql);
+};
+
+export const insertUser = (user: User) => {
+  const sql = `
+    INSERT INTO ${USER} (
+      ${USERNAME},
+      ${API_KEY},
+      ${CREATED}
+    ) VALUES (?, ?, ?)
+  `;
+
+  return database.prepare(sql).run(user.username, user.api_key, user.created.toISOString());
+};
+
+const queryUser = (sql: string, ...args: SQLQueryBindings[]) => {
+  return database
+    .prepare<User, SQLQueryBindings[]>(sql)
+    .all(...args)
+    .map((u) => {
+      const nullified: any = { ...u };
+      Object.keys(userSchema).forEach((c) => {
+        if (!isDefined(nullified[c])) nullified[c] = null;
+      });
+      return new User(nullified);
+    });
+};
+
+export const getUser = (user: Partial<User>) => {
+  const query = prepareQuery(user);
+  const sql = `
+    SELECT *
+    FROM ${USER}
+    ${query}
+  `;
+  return queryUser(sql);
+};
+
+export const isUserExists = (id: number) => {
+  return getUser({ id }).length === 1;
 };

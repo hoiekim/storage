@@ -16,42 +16,58 @@ Use the following command to start the server:
 npm start
 ```
 
-Use the following command for API references:
-
-```
-npm run api-docs
-```
-
-Now the server should be running on `localhost:3006`.
-
 A few things to remind:
 
-- Create [./.env](./.env) file if you want to custmize port, API key, etc. See [./.env.example](./.env.example) file for configuration options.
+- Create [./.env](./.env) file if you want to custmize port. See [./.env.example](./.env.example) file for configuration options.
 - Uploaded files are stored in [./files](./files) folder
 - [./.temp](./.temp) folder is reserved for creating thumbnails
 - Databse is stored in [./.db](./.db) file
-- See [./src/server/routers](./src/server/routers) folder for references about API endpoints.
+- See [./src/server/routers](./src/server/routers) folder for more references about API endpoints.
 
-# How to configure API key
+Now the server should be running on `localhost:3006`.
 
-In default all APIs are accessible without athentication and it'd be a problem if someone else manipulates your cloud data without you knowing. To configure API key, create [./.env](./.env) file in the root directory of this package and put in a line such as
+> When the server first runs you'll get the admin user credentials(API key). Save this key to make API calls as admin user. For example:
+>
+> ```
+> Successfully created user
+> -> username: admin
+> -> api_key: b5858ad0-76c0-4e4f-9e6a-7c9d807ab7d2
+> ```
+
+# How to create user & API key
+
+We use one API key for one user. Use the following command to create a user and generate an API key for the user:
 
 ```
-API_KEY=my_api_key
+npm run create-user -- --username my-user
 ```
 
-See [./.env.example](./.env.example) for reference.
-
-After configuring the API key, you need to include the key in the request to get permission.
+Save the generated API key shown in the log for example,
 
 ```
-curl -H "authorization: Bearer my_api_key" localhost:3006
+Successfully created user
+-> username: my-user
+-> api_key: b5858ad0-76c0-4e4f-9e6a-7c9d807ab7d2
+```
+
+Include the API key in the request to access API endpoints.
+
+```
+curl -H "authorization: Bearer b5858ad0-76c0-4e4f-9e6a-7c9d807ab7d2" localhost:3006
 ```
 
 or
 
 ```
-curl "localhost:3006?api_key=my_api_key"
+curl "localhost:3006?api_key=b5858ad0-76c0-4e4f-9e6a-7c9d807ab7d2"
+```
+
+# API references
+
+Use the following command for API references:
+
+```
+npm run api-docs
 ```
 
 # How to access from the internet
@@ -72,7 +88,7 @@ curl http://{your-ip-address}:3006
 
 It's great if that works, however, most people might still have trouble if they're using wifi router. Consider reading your router provider's guide to setup NAT forwarding to locate specific device([example reference](https://www.tp-link.com/us/user-guides/archer-a7&c7_v5/chapter-13-nat-forwarding)) and DDNS to setup fixed domain for dynamic IP([example reference](https://www.tp-link.com/us/user-guides/archer-a7&c7_v5/chapter-15-customize-your-network-settings#ug-sub-title-4)).
 
-It's still not likely that you can access your server from the internet if your internet service provider assigned you an IP under CGNAT(Carrier-grade NAT). You know that you're under CGNAT when the IP address that your router recognizes doesn't match the public IP addresses you found in [whatismyipaddress.com](https://whatismyipaddress.com). Also IP addresses under CGNAT often looks like 100.x.x.x. In this case, you need to ask your internet service provider to have you opt-out from CGNAT and assign you a public IP address.
+It's still not likely that you can access your server from the internet if your internet service provider assigned you an IP under CGNAT(Carrier-grade NAT). You know that you're under CGNAT when the IP address that your router recognizes doesn't match the public IP address you found in [whatismyipaddress.com](https://whatismyipaddress.com). Also IP addresses under CGNAT often looks like 100.x.x.x. In this case, you need to ask your internet service provider to have you opt-out from CGNAT and assign you a public IP address.
 
 # Troubleshooting
 

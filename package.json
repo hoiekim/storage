@@ -6,9 +6,10 @@
   "scripts": {
     "build": "tsc",
     "test": "tsc --noEmit",
-    "start": "bun src/start.ts",
-    "dev": "bun --watch src/start.ts",
-    "api-docs": "bun src/get-api-docs.ts"
+    "start": "bun src/start-server.ts",
+    "dev": "bun --watch src/start-server.ts",
+    "api-docs": "bun src/get-api-docs.ts",
+    "create-user": "bun src/create-user.ts"
   },
   "author": "hoiekim",
   "license": "ISC",

@@ -1,7 +1,26 @@
-import { isNull, isNumber, isPotentialDate, isString } from "server";
+import { database, isNull, isNumber, isPotentialDate, isString } from "server";
+import {
+  ALTITUDE,
+  CREATED,
+  DURATION,
+  FILEKEY,
+  FILENAME,
+  FILESIZE,
+  HEIGHT,
+  ID,
+  ITEM_ID,
+  LATITUDE,
+  LONGITUDE,
+  MIME_TYPE,
+  UPLOADED,
+  USER,
+  USER_ID,
+  WIDTH,
+} from "./common";
 
 export class Metadata {
   id: number;
+  user_id: number;
   filekey: string;
   filename: string;
   filesize: number;
@@ -19,6 +38,7 @@ export class Metadata {
   constructor(m: Metadata) {
     Metadata.assertType(m);
     this.id = m.id;
+    this.user_id = m.user_id;
     this.filekey = m.filekey;
     this.filename = m.filename;
     this.filesize = m.filesize;
@@ -42,6 +62,7 @@ export class Metadata {
     type Checker = { [x in keyof Metadata]: (e: any) => boolean };
     const checker: Checker = {
       id: isNumber,
+      user_id: (e) => isNumber(e) && database.isUserExists(e),
       filekey: isString,
       filename: isString,
       filesize: isNumber,
@@ -64,40 +85,20 @@ export class Metadata {
     }, new Array<string>());
 
     if (errors.length) {
-      throw new Error(
-        `There are ${errors.length} wrong type(s):\n${errors.join("\n")}`
-      );
+      throw new Error(`There are ${errors.length} wrong type(s):\n${errors.join("\n")}`);
     }
   };
 }
 
-export const METADATA = "metadata";
-
-export const ID = "id";
-export const FILEKEY = "filekey";
-export const FILENAME = "filename";
-export const FILESIZE = "filesize";
-export const MIME_TYPE = "mime_type";
-export const ITEM_ID = "item_id";
-export const WIDTH = "width";
-export const HEIGHT = "height";
-export const DURATION = "duration";
-export const ALTITUDE = "altitude";
-export const LATITUDE = "latitude";
-export const LONGITUDE = "longitude";
-export const CREATED = "created";
-export const UPLOADED = "uploaded";
-
-export const NULL = "NULL";
-
-export type Schema = { [k in keyof Metadata]: string };
-export const schema: Schema = {
+export type MetadataSchema = { [k in keyof Metadata]: string };
+export const metadataSchema: MetadataSchema = {
   [ID]: "INTEGER NOT NULL PRIMARY KEY",
+  [USER_ID]: "INTEGER NOT NULL",
   [FILEKEY]: "TEXT NOT NULL",
   [FILENAME]: "TEXT NOT NULL",
   [FILESIZE]: "INTEGER NOT NULL",
   [MIME_TYPE]: "TEXT NOT NULL",
-  [ITEM_ID]: "TEXT",
+  [ITEM_ID]: "TEXT UNIQUE",
   [WIDTH]: "INTEGER",
   [HEIGHT]: "INTEGER",
   [DURATION]: "REAL",
@@ -108,6 +109,8 @@ export const schema: Schema = {
   [UPLOADED]: "TEXT NOT NULL",
 };
 
-export const lightColumns = Object.keys(schema).filter(
-  (c) => !schema[c as keyof Metadata].includes("BLOB")
+export const metadataConstraints = [`FOREIGN KEY(${USER_ID}) REFERENCES ${USER}(${ID})`];
+
+export const lightColumns = Object.keys(metadataSchema).filter(
+  (c) => !metadataSchema[c as keyof Metadata].includes("BLOB")
 );

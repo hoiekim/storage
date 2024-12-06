@@ -11,6 +11,7 @@ interface GetMetadatOption {
 }
 
 export const getMetadata = async (
+  user_id: number,
   filePath: string,
   option: GetMetadatOption = {}
 ): Promise<Metadata> => {
@@ -73,6 +74,7 @@ export const getMetadata = async (
 
   return new Metadata({
     id: -1,
+    user_id,
     filekey,
     filename: FileName,
     filesize,
@@ -96,7 +98,7 @@ export const getUniqueFilename = (filename: string) => {
   while (existing.length) {
     const ext = path.extname(result);
     const name = result.slice(0, -ext.length);
-    // Find patthern: "abc(1)", "def (14)" or etc.
+    // Find patthern: "abc(1)", "def (2)" and so on.
     const match = name.match(/\(\d+\)\s*$/);
     if (match) {
       const n = +match[0].slice(1, -1);

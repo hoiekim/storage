@@ -15,7 +15,7 @@ const deleteHandler: RequestHandler = async (req, res) => {
       if (!metadata.length) {
         res.status(404).json({ message: `Metadata not found: ${id}` });
       } else {
-        database.remove({ id });
+        database.removeMetadata({ id });
         metadata.forEach(({ filekey }) => {
           const filePath = path.join(FILES_DIR, filekey);
           if (fs.existsSync(filePath)) fs.rmSync(filePath);

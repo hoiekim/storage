@@ -1,22 +1,28 @@
 import { RequestHandler } from "express";
-
-const { API_KEY } = process.env;
+import { database, isString } from "server";
 
 export const authenticate: RequestHandler = (req, res, next) => {
-  if (API_KEY === undefined) {
-    next();
-    return;
-  }
   const authHeader = req.headers["authorization"];
-  if (authHeader === `Bearer ${API_KEY}`) {
-    next();
-    return;
+  if (authHeader) {
+    const api_key = authHeader.split("Bearer ")[1];
+    if (api_key) {
+      const users = database.getUser({ api_key });
+      if (users.length === 1) {
+        req.user = users[0];
+        next();
+        return;
+      }
+    }
   }
 
   const apiKeyParam = req.query["api_key"];
-  if (apiKeyParam === API_KEY) {
-    next();
-    return;
+  if (isString(apiKeyParam)) {
+    const users = database.getUser({ api_key: apiKeyParam });
+    if (users.length === 1) {
+      req.user = users[0];
+      next();
+      return;
+    }
   }
 
   res.status(401).json({ message: "Unauthorized: Invalid API key" });

@@ -10,6 +10,15 @@ import {
   allMetadataRouter,
   deleteRouter,
 } from "./routers";
+import { User } from "./lib";
+
+declare global {
+  namespace Express {
+    export interface Request {
+      user?: User;
+    }
+  }
+}
 
 const app = express();
 
