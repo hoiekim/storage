@@ -13,7 +13,11 @@ export const getPhotoThumbnail = async (
     const ext = path.extname(filename);
     const filekey = ext.length ? filename.slice(0, -ext.length) : filename;
     const outputPath = path.join(THUMBNAILS_DIR, filekey);
-    await sharp(filePath).jpeg().resize(width, width).toFile(outputPath);
+    await sharp(filePath)
+      .jpeg()
+      .resize(width, width)
+      .withMetadata()
+      .toFile(outputPath);
     if (!silent) console.log(`Photo thumbnail created for ${filePath}`);
     return filekey;
   } catch (err) {
