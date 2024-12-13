@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg";
-import { THUMBNAILS_DIR } from "server/routers";
+import { TEMP_DIR, THUMBNAILS_DIR } from "server";
 
 export const getPhotoThumbnail = async (
   filePath: string,
@@ -25,8 +25,6 @@ export const getPhotoThumbnail = async (
     throw err;
   }
 };
-
-const TEMP_DIR = path.join(__dirname, "../../../.temp");
 
 export const getVideoThumbnail = async (
   filePath: string,

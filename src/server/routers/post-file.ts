@@ -16,8 +16,8 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 * 1024 }, // 10GB limit
   fileFilter: (req, file, cb) => {
     const isPhoto = file.mimetype.startsWith("image/");
-    const isViceo = file.mimetype.startsWith("video/");
-    if (isPhoto || isViceo) {
+    const isVideo = file.mimetype.startsWith("video/");
+    if (isPhoto || isVideo) {
       cb(null, true);
     } else {
       cb(new Error("Invalid file type. Only photos and videos are allowed."));
@@ -65,17 +65,19 @@ const uploadHandler: RequestHandler = async (req, res) => {
   }
 };
 
-export const uploadRouter: Router = {
+export const postFileRouter: Router = {
+  method: "POST",
   route: "/file",
   handlers: [upload.single("file"), uploadHandler],
 };
 
-export const uploadWithItemIdRouter: Router = {
+export const postFileWithItemIdRouter: Router = {
+  method: "POST",
   route: "/file/:itemId",
   handlers: [upload.single("file"), uploadHandler],
 };
 
-export const errorHandler = (
+export const multerErrorHandler = (
   err: any,
   req: express.Request,
   res: express.Response,

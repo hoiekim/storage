@@ -4,11 +4,12 @@ import {
   getFileRouter,
   thumbnailRouter,
   metadataRouter,
-  errorHandler,
-  uploadRouter,
-  uploadWithItemIdRouter,
+  multerErrorHandler,
+  postFileRouter,
+  postFileWithItemIdRouter,
   allMetadataRouter,
   deleteRouter,
+  uploadRouter,
 } from "./routers";
 import { User } from "./lib";
 
@@ -16,6 +17,7 @@ declare global {
   namespace Express {
     export interface Request {
       user?: User;
+      filekey?: string;
     }
   }
 }
@@ -28,14 +30,30 @@ app.get("/", (req, res) => {
   res.status(200).json({ message: "OK" });
 });
 
-app.get(metadataRouter.route, ...metadataRouter.handlers);
-app.get(allMetadataRouter.route, ...allMetadataRouter.handlers);
-app.get(thumbnailRouter.route, ...thumbnailRouter.handlers);
-app.get(getFileRouter.route, ...getFileRouter.handlers);
-app.delete(deleteRouter.route, ...deleteRouter.handlers);
-app.post(uploadRouter.route, ...uploadRouter.handlers);
-app.post(uploadWithItemIdRouter.route, ...uploadWithItemIdRouter.handlers);
-app.use(errorHandler);
+const routers = [
+  metadataRouter,
+  allMetadataRouter,
+  thumbnailRouter,
+  getFileRouter,
+  deleteRouter,
+  uploadRouter,
+  postFileRouter,
+  postFileWithItemIdRouter,
+];
+
+routers.forEach(({ method, route, handlers }) => {
+  if (method === "GET") {
+    app.get(route, ...handlers);
+  } else if (method === "POST") {
+    app.post(route, ...handlers);
+  } else if (method === "DELETE") {
+    app.delete(route, ...handlers);
+  } else {
+    app.use(route, ...handlers);
+  }
+});
+
+app.use(multerErrorHandler);
 
 app.use("*", (req, res) => {
   res.status(404).json({ message: "Not found" });

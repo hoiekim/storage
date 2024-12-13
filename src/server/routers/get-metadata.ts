@@ -27,11 +27,13 @@ const metadataHandler: RequestHandler = async (req, res) => {
 };
 
 export const metadataRouter: Router = {
+  method: "GET",
   route: "/metadata/:id",
   handlers: [metadataHandler],
 };
 
 export const allMetadataRouter: Router = {
+  method: "GET",
   route: "/metadata",
   handlers: [metadataHandler],
 };

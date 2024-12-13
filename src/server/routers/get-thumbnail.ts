@@ -30,6 +30,7 @@ const thumbnailHandler: RequestHandler = async (req, res) => {
 };
 
 export const thumbnailRouter: Router = {
+  method: "GET",
   route: "/thumbnail/:filekey",
   handlers: [thumbnailHandler],
 };

@@ -65,6 +65,7 @@ const getFileHandler: RequestHandler = async (req, res) => {
 };
 
 export const getFileRouter: Router = {
+  method: "GET",
   route: "/file/:filekey",
   handlers: [getFileHandler],
 };

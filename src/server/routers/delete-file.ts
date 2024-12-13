@@ -34,6 +34,7 @@ const deleteHandler: RequestHandler = async (req, res) => {
 };
 
 export const deleteRouter: Router = {
+  method: "DELETE",
   route: "/file/:id",
   handlers: [deleteHandler],
 };
