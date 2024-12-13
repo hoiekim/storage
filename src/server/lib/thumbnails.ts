@@ -2,9 +2,10 @@ import path from "path";
 import fs from "fs";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg";
-import { TEMP_DIR, THUMBNAILS_DIR } from "server";
+import { TEMP_DIR, getThumbnailPath } from "server";
 
 export const getPhotoThumbnail = async (
+  user_id: number,
   filePath: string,
   { width = 300, silent = false } = {}
 ) => {
@@ -12,7 +13,7 @@ export const getPhotoThumbnail = async (
     const filename = path.basename(filePath);
     const ext = path.extname(filename);
     const filekey = ext.length ? filename.slice(0, -ext.length) : filename;
-    const outputPath = path.join(THUMBNAILS_DIR, filekey);
+    const outputPath = getThumbnailPath(user_id, filekey);
     await sharp(filePath)
       .jpeg()
       .resize(width, width)
@@ -27,6 +28,7 @@ export const getPhotoThumbnail = async (
 };
 
 export const getVideoThumbnail = async (
+  user_id: number,
   filePath: string,
   { width = 300, time = 0 } = {}
 ) => {
@@ -55,7 +57,10 @@ export const getVideoThumbnail = async (
     }
   });
 
-  const filekey = await getPhotoThumbnail(tempPath, { width, silent: true });
+  const filekey = await getPhotoThumbnail(user_id, tempPath, {
+    width,
+    silent: true,
+  });
   fs.rmSync(tempPath);
 
   console.log(`Video thumbnail created for ${filePath}`);

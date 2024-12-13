@@ -6,7 +6,7 @@ import { Server as TusServer } from "@tus/server";
 import { FileStore } from "@tus/file-store";
 
 import { database, getMetadata, getUniqueFilename, Metadata } from "server";
-import { Router, FILES_DIR, TEMP_DIR } from "./common";
+import { Router, TEMP_DIR } from "./common";
 
 const uploadApp = express();
 

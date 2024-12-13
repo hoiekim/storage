@@ -1,15 +1,14 @@
-import path from "path";
 import fs, { createReadStream } from "fs";
 import { RequestHandler } from "express";
 import { database } from "server";
-import { THUMBNAILS_DIR, Router } from "./common";
+import { Router, getThumbnailPath } from "./common";
 
 const thumbnailHandler: RequestHandler = async (req, res) => {
   const { filekey } = req.params;
   const user = req.user!;
 
   try {
-    const filePath = path.join(THUMBNAILS_DIR, filekey);
+    const filePath = getThumbnailPath(user.id, filekey);
     if (!fs.existsSync(filePath)) {
       throw new Error(`Invalid parameter: ${filekey}`);
     }

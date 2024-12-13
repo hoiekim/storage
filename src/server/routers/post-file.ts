@@ -1,13 +1,12 @@
-import path from "path";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import express, { RequestHandler } from "express";
 import multer from "multer";
 import { database, getMetadata, getUniqueFilename, Metadata } from "server";
-import { Router, FILES_DIR } from "./common";
+import { Router, getFolderPath, getFilePath } from "./common";
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, FILES_DIR),
+  destination: (req, file, cb) => cb(null, getFolderPath(req.user!.id)),
   filename: (req, file, cb) => cb(null, uuidv4()),
 });
 
@@ -37,7 +36,7 @@ const uploadHandler: RequestHandler = async (req, res) => {
 
   try {
     const { filename: filekey, originalname: filename } = file;
-    const savedPath = path.join(FILES_DIR, filekey);
+    const savedPath = getFilePath(user.id, filekey);
 
     const existing =
       itemId && database.getMetadata({ item_id: itemId, user_id: user.id });

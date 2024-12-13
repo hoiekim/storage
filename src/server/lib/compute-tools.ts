@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { isNumber, isPotentialDate } from "server";
+import { isNumber } from "server";
 import { getExifMetadata } from "./exiftool";
 import { database, Metadata } from "./sqlite";
 import { getPhotoThumbnail, getVideoThumbnail } from "./thumbnails";
@@ -48,11 +48,11 @@ export const getMetadata = async (
     if (!createThumbnail) return res(null);
     try {
       if (MIMEType.startsWith("image/")) {
-        const thumbnail = await getPhotoThumbnail(filePath);
+        const thumbnail = await getPhotoThumbnail(user_id, filePath);
         res(thumbnail);
       } else if (MIMEType.startsWith("video/")) {
         const time = isNumber(Duration) ? (2 * Duration) / 3 : 0;
-        const thumbnail = await getVideoThumbnail(filePath, { time });
+        const thumbnail = await getVideoThumbnail(user_id, filePath, { time });
         res(thumbnail);
       } else {
         res(null);

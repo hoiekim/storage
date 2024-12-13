@@ -1,15 +1,14 @@
-import path from "path";
 import fs, { createReadStream } from "fs";
 import { RequestHandler } from "express";
 import { database } from "server";
-import { FILES_DIR, Router } from "./common";
+import { Router, getFilePath } from "./common";
 
 const getFileHandler: RequestHandler = async (req, res) => {
   const { filekey } = req.params;
   const user = req.user!;
 
   try {
-    const filePath = path.join(FILES_DIR, filekey);
+    const filePath = getFilePath(user.id, filekey);
     if (!fs.existsSync(filePath)) {
       throw new Error(`Invalid parameter: ${filekey}`);
     }
