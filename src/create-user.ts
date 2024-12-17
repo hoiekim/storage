@@ -2,10 +2,11 @@ import { v4 as uuidv4 } from "uuid";
 import { User, database, isError } from "./server";
 
 const main = () => {
-  const api_key = uuidv4();
+  let api_key = uuidv4();
   let username = "";
   process.argv.forEach((e, i, array) => {
     if (e === "--username") username = array[i + 1];
+    if (e === "--api-key") api_key = array[i + 1];
   });
   if (username) {
     try {
