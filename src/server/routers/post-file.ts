@@ -38,8 +38,7 @@ const uploadHandler: RequestHandler = async (req, res) => {
     const { filename: filekey, originalname: filename } = file;
     const savedPath = getFilePath(user.id, filekey);
 
-    const existing =
-      itemId && database.getMetadata({ item_id: itemId, user_id: user.id });
+    const existing = itemId && database.getMetadata({ item_id: itemId, user_id: user.id });
     if (existing?.length) {
       fs.rmSync(savedPath);
       res.status(200).json({
