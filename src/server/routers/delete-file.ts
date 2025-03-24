@@ -1,7 +1,7 @@
 import fs from "fs";
 import { RequestHandler } from "express";
-import { database } from "server";
-import { Router, getFilePath, getThumbnailPath } from "./common";
+import { database, getFilePath, getThumbnailPath } from "server";
+import { Router } from "./common";
 
 const deleteHandler: RequestHandler = async (req, res) => {
   const { id: idString } = req.params;

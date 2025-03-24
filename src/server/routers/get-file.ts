@@ -1,7 +1,7 @@
 import fs, { createReadStream } from "fs";
 import { RequestHandler } from "express";
-import { database } from "server";
-import { Router, getFilePath } from "./common";
+import { database, getFilePath } from "server";
+import { Router } from "./common";
 
 const getFileHandler: RequestHandler = async (req, res) => {
   const { filekey } = req.params;
@@ -29,9 +29,7 @@ const getFileHandler: RequestHandler = async (req, res) => {
         .map((part) => parseInt(part, 10));
 
       const chunkStart = isNaN(start) ? 0 : start;
-      const chunkEnd = isNaN(end)
-        ? fileStat.size - 1
-        : Math.min(end, fileStat.size - 1);
+      const chunkEnd = isNaN(end) ? fileStat.size - 1 : Math.min(end, fileStat.size - 1);
 
       if (chunkStart > chunkEnd) {
         // Invalid range
@@ -42,10 +40,7 @@ const getFileHandler: RequestHandler = async (req, res) => {
       }
 
       res.status(206); // Partial Content
-      res.setHeader(
-        "Content-Range",
-        `bytes ${chunkStart}-${chunkEnd}/${fileStat.size}`
-      );
+      res.setHeader("Content-Range", `bytes ${chunkStart}-${chunkEnd}/${fileStat.size}`);
       res.setHeader("Content-Length", chunkEnd - chunkStart + 1);
 
       const fileStream = createReadStream(filePath, {

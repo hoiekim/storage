@@ -135,12 +135,10 @@ public
 # custom tools
 _fix_tools
 
-# database
-*.db
-
 # Mac file system
 .DS_Store
 */.DS_Store
 
-# Stored files
-.files
+# Stored files & database
+data
+data.testing

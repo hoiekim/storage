@@ -1,7 +1,7 @@
 import fs, { createReadStream } from "fs";
 import { RequestHandler } from "express";
-import { database } from "server";
-import { Router, getThumbnailPath } from "./common";
+import { database, getThumbnailPath } from "server";
+import { Router } from "./common";
 
 const thumbnailHandler: RequestHandler = async (req, res) => {
   const { filekey } = req.params;

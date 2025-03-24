@@ -1,13 +1,20 @@
 import fs from "fs";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 import express, { RequestHandler } from "express";
 import multer from "multer";
-import { database, getMetadata, getUniqueFilename, Metadata } from "server";
-import { Router, getFolderPath, getFilePath } from "./common";
+import {
+  database,
+  getFilePath,
+  getUserFolderPath,
+  getMetadata,
+  getUniqueFilename,
+  Metadata,
+} from "server";
+import { Router } from "./common";
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, getFolderPath(req.user!.id)),
-  filename: (req, file, cb) => cb(null, uuidv4()),
+  destination: (req, file, cb) => cb(null, getUserFolderPath(req.user!.id)),
+  filename: (req, file, cb) => cb(null, randomUUID()),
 });
 
 const upload = multer({

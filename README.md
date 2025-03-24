@@ -19,9 +19,7 @@ npm start
 A few things to remind:
 
 - Create [./.env](./.env) file if you want to custmize port. See [./.env.example](./.env.example) file for configuration options.
-- Uploaded files are stored in [./files](./files) folder
-- [./.temp](./.temp) folder is reserved for creating thumbnails
-- Databse is stored in [./.db](./.db) file
+- Uploaded files and database are stored in [./data](./data) folder
 - See [./src/server/routers](./src/server/routers) folder for more references about API endpoints.
 
 Now the server should be running on `localhost:3006`.

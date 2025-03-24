@@ -1,19 +1,19 @@
 import path from "path";
 import fs from "fs";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 import express, { Request, Response } from "express";
 import { Server as TusServer } from "@tus/server";
 import { FileStore } from "@tus/file-store";
-
 import { database, getMetadata, getUniqueFilename, Metadata } from "server";
-import { Router, TEMP_DIR } from "./common";
+import { Router } from "./common";
+// import directly to avoid circular initialization
+import { TEMP_PATH } from "../lib/paths";
 
 const uploadApp = express();
 
 const namingFunction = (req: Request) => {
   const user = req.user!;
-  const filekey = uuidv4();
-  // @ts-ignore
+  const filekey = randomUUID();
   req.filekey = filekey;
   return `${user.id}/${filekey}`;
 };
@@ -25,10 +25,7 @@ interface GenerateUrlOption {
   id: string;
 }
 
-const generateUrl = (
-  req: Request,
-  { proto, host, path, id }: GenerateUrlOption
-) => {
+const generateUrl = (req: Request, { proto, host, path, id }: GenerateUrlOption) => {
   id = Buffer.from(id, "utf-8").toString("base64url");
   return `${proto}://${host}${path}/${id}`;
 };
@@ -42,10 +39,9 @@ const onUploadFinish = async (req: Request, res: Response, upload: any) => {
   const { itemId } = req.params;
   console.log(filekey, itemId);
   const user = req.user!;
-  const savedPath = path.join(TEMP_DIR, filekey);
+  const savedPath = path.join(TEMP_PATH, filekey);
 
-  const existing =
-    itemId && database.getMetadata({ item_id: itemId, user_id: user.id });
+  const existing = itemId && database.getMetadata({ item_id: itemId, user_id: user.id });
   if (existing?.length) {
     fs.rmSync(savedPath);
     return { res };
@@ -63,7 +59,7 @@ const onUploadFinish = async (req: Request, res: Response, upload: any) => {
 const server = new TusServer({
   path: "/",
   // datastore: new FileStore({directory: FILES_DIR})
-  datastore: new FileStore({ directory: TEMP_DIR }),
+  datastore: new FileStore({ directory: TEMP_PATH }),
   // @ts-ignore
   namingFunction,
   // @ts-ignore

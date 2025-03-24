@@ -1,7 +1,6 @@
-import path from "path";
 import { Database, SQLQueryBindings } from "bun:sqlite";
-import { v4 as uuidv4 } from "uuid";
-import { isDate, isDefined, isNull, isNumber, isString } from "server";
+import { randomUUID } from "crypto";
+import { DB_PATH, isDate, isDefined, isNull, isNumber, isString, isTesting, logger } from "server";
 import {
   ALTITUDE,
   CREATED,
@@ -32,8 +31,7 @@ import {
   USER_ID,
 } from "./models";
 
-const DATABASE_PATH = path.join(__dirname, "../../../../.db");
-const database = new Database(DATABASE_PATH);
+const database = new Database(DB_PATH);
 
 type Schema = { [k: string]: string };
 type Constarints = string[];
@@ -65,15 +63,19 @@ export const init = () => {
   database.exec(createUserTableSql);
 
   const allUsers = queryUser(`SELECT * from ${USER}`);
-  if (!allUsers.length) {
-    console.log("No users found in the database. Creating admin user...");
-    const api_key = uuidv4();
-    const username = ADMIN;
-    insertUser(new User({ id: -1, username, api_key, created: new Date() }));
-    console.log(`Successfully created user\n-> username: ${username}\n-> api_key: ${api_key}`);
+
+  if (!allUsers.find((u) => u.username === ADMIN)) {
+    logger.log("No admin user found in the database. Creating admin user...");
+    const api_key = isTesting ? ADMIN : randomUUID();
+    insertUser(new User({ id: -1, username: ADMIN, api_key, created: new Date() }));
+    logger.log(`Successfully created user\n-> username: ${ADMIN}\n-> api_key: ${api_key}`);
   }
 
-  console.log("Successfully initialized database.");
+  logger.log("Successfully initialized database.");
+};
+
+export const close = () => {
+  database.close();
 };
 
 export const insertMetadata = (metadata: Metadata) => {

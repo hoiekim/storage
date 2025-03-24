@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg";
-import { TEMP_DIR, getThumbnailPath } from "server";
+import { TEMP_PATH, getThumbnailPath } from "server";
 
 export const getPhotoThumbnail = async (
   user_id: number,
@@ -14,11 +14,7 @@ export const getPhotoThumbnail = async (
     const ext = path.extname(filename);
     const filekey = ext.length ? filename.slice(0, -ext.length) : filename;
     const outputPath = getThumbnailPath(user_id, filekey);
-    await sharp(filePath)
-      .jpeg()
-      .resize(width, width)
-      .withMetadata()
-      .toFile(outputPath);
+    await sharp(filePath).jpeg().resize(width, width).withMetadata().toFile(outputPath);
     if (!silent) console.log(`Photo thumbnail created for ${filePath}`);
     return filekey;
   } catch (err) {
@@ -35,7 +31,7 @@ export const getVideoThumbnail = async (
   const filename = path.basename(filePath);
   const ext = path.extname(filename);
   const _filekey = ext.length ? filename.slice(0, -ext.length) : filename;
-  const tempPath = path.join(TEMP_DIR, `${_filekey}.png`);
+  const tempPath = path.join(TEMP_PATH, `${_filekey}.png`);
 
   await new Promise<void>((res, rej) => {
     try {
@@ -43,7 +39,7 @@ export const getVideoThumbnail = async (
         .screenshots({
           timestamps: [time],
           filename: _filekey,
-          folder: TEMP_DIR,
+          folder: TEMP_PATH,
         })
         .on("end", () => {
           res();

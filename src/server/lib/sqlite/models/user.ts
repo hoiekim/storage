@@ -1,4 +1,4 @@
-import { isDate, isNull, isNumber, isPotentialDate, isString } from "server";
+import { isNull, isNumber, isPotentialDate, isString } from "server";
 import { CREATED, ID, USERNAME, API_KEY } from "./common";
 
 export class User {

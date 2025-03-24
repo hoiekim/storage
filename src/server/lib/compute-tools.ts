@@ -51,7 +51,7 @@ export const getMetadata = async (
         const thumbnail = await getPhotoThumbnail(user_id, filePath);
         res(thumbnail);
       } else if (MIMEType.startsWith("video/")) {
-        const time = isNumber(Duration) ? (2 * Duration) / 3 : 0;
+        const time = isNumber(Duration) ? Duration / 2 : 0;
         const thumbnail = await getVideoThumbnail(user_id, filePath, { time });
         res(thumbnail);
       } else {

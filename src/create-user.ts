@@ -1,8 +1,8 @@
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 import { User, database, isError } from "./server";
 
 const main = () => {
-  let api_key = uuidv4();
+  let api_key: string = randomUUID();
   let username = "";
   process.argv.forEach((e, i, array) => {
     if (e === "--username") username = array[i + 1];
