@@ -1,5 +1,6 @@
+import http from "http";
 import express from "express";
-import { User, database } from "./lib";
+import { User, database, isTesting } from "./lib";
 import {
   authenticate,
   getFileRouter,
@@ -63,20 +64,30 @@ const createExpressApp = () => {
   return app;
 };
 
-export const app = createExpressApp();
+const { PORT = "3006" } = process.env;
 
-export const startServer = () => {
-  database.init();
+export class Server {
+  static port = PORT;
+  port = Server.port;
 
-  const { PORT = 3006, ENVIRONMENT = "production" } = process.env;
-  return app.listen(PORT, () => {
-    if (ENVIRONMENT === "production") {
-      console.log(`Storage server running at http://localhost:${PORT}`);
-    } else if (ENVIRONMENT === "testing") {
-      console.log(`Testing Storage server running at http://localhost:${PORT}`);
-    }
-  });
-};
+  static app = createExpressApp();
+  app = Server.app;
+
+  server: http.Server | undefined;
+
+  start = () => {
+    database.init();
+    const { app, port } = Server;
+    const host = `http://localhost:${port}`;
+    this.server = app.listen(port, () => {
+      if (isTesting) console.log(`Testing Storage server running at ${host}`);
+      else console.log(`Storage server running at ${host}`);
+    });
+    return this.server;
+  };
+
+  close = () => this.server?.close();
+}
 
 export * from "./lib";
 export * from "./routers";

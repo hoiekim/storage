@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { startServer } from "./server";
-startServer();
+import { Server } from "./server";
+new Server().start();

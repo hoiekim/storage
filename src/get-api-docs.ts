@@ -1,9 +1,9 @@
-import { app } from "./server";
+import { Server } from "./server";
 
 const main = () => {
   type Route = { path: string; methods: any };
   const routes: Route[] = [];
-  app._router.stack.forEach((middleware: any) => {
+  Server.app._router.stack.forEach((middleware: any) => {
     if (middleware.route) {
       const methods = Object.keys(middleware.route.methods);
       routes.push({ path: middleware.route.path, methods });
