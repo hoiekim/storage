@@ -3,7 +3,7 @@ import { RequestHandler } from "express";
 import { database, getFilePath, getThumbnailPath } from "server";
 import { Router } from "./common";
 
-const deleteHandler: RequestHandler = async (req, res) => {
+const deleteHandler: RequestHandler & { description?: string } = async (req, res) => {
   const { id: idString } = req.params;
   const id = +idString;
   const user = req.user!;
@@ -31,6 +31,8 @@ const deleteHandler: RequestHandler = async (req, res) => {
     }
   }
 };
+
+deleteHandler.description = "Deletes file found by 'filekey'.";
 
 export const deleteRouter: Router = {
   method: "DELETE",

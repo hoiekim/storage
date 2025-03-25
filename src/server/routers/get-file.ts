@@ -3,7 +3,7 @@ import { RequestHandler } from "express";
 import { database, getFilePath } from "server";
 import { Router } from "./common";
 
-const getFileHandler: RequestHandler = async (req, res) => {
+const getFileHandler: RequestHandler & { description?: string } = async (req, res) => {
   const { filekey } = req.params;
   const user = req.user!;
 
@@ -57,6 +57,8 @@ const getFileHandler: RequestHandler = async (req, res) => {
     res.status(404).json({ message: `File not found: ${message}` });
   }
 };
+
+getFileHandler.description = "Returns file found by 'filekey'.";
 
 export const getFileRouter: Router = {
   method: "GET",

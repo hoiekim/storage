@@ -3,7 +3,7 @@ import { RequestHandler } from "express";
 import { database, getThumbnailPath } from "server";
 import { Router } from "./common";
 
-const thumbnailHandler: RequestHandler = async (req, res) => {
+const thumbnailHandler: RequestHandler & { description?: string } = async (req, res) => {
   const { filekey } = req.params;
   const user = req.user!;
 
@@ -27,6 +27,8 @@ const thumbnailHandler: RequestHandler = async (req, res) => {
     res.status(404).json({ message: `Thumbnail not found: ${message}` });
   }
 };
+
+thumbnailHandler.description = "Returns thumbnail found by 'filekey'.";
 
 export const thumbnailRouter: Router = {
   method: "GET",

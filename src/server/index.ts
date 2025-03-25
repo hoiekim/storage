@@ -3,6 +3,7 @@ import express from "express";
 import { User, database, isTesting } from "./lib";
 import {
   authenticate,
+  rootRouter,
   getFileRouter,
   thumbnailRouter,
   metadataRouter,
@@ -11,7 +12,7 @@ import {
   postFileWithItemIdRouter,
   allMetadataRouter,
   deleteRouter,
-  uploadRouter,
+  tusRouter,
 } from "./routers";
 
 declare global {
@@ -28,17 +29,14 @@ const createExpressApp = () => {
 
   app.use(authenticate);
 
-  app.get("/", (req, res) => {
-    res.status(200).json({ message: "OK" });
-  });
-
   const routers = [
+    rootRouter,
     metadataRouter,
     allMetadataRouter,
     thumbnailRouter,
     getFileRouter,
     deleteRouter,
-    uploadRouter,
+    tusRouter,
     postFileRouter,
     postFileWithItemIdRouter,
   ];

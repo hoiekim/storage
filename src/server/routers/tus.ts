@@ -86,7 +86,7 @@ const server = new TusServer({
 // @ts-ignore
 uploadApp.all("*", server.handle.bind(server));
 
-export const uploadRouter: Router = {
+export const tusRouter: Router = {
   route: "/tus",
   handlers: [uploadApp],
 };

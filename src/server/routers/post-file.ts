@@ -31,7 +31,7 @@ const upload = multer({
   },
 });
 
-const uploadHandler: RequestHandler = async (req, res) => {
+const uploadHandler: RequestHandler & { description?: string } = async (req, res) => {
   const file = req.file;
   const { itemId } = req.params;
   const user = req.user!;
@@ -69,6 +69,9 @@ const uploadHandler: RequestHandler = async (req, res) => {
     res.status(400).json({ message: `Corrupted file: ${message}` });
   }
 };
+
+uploadHandler.description =
+  "Uploads file and create metadata. Attach file as 'FormData' in the body of POST request. URL parameter 'itemId' can be used as a unique key; requests with duplicate itemId will be ignored.";
 
 export const postFileRouter: Router = {
   method: "POST",

@@ -1,4 +1,5 @@
 export * from "./common";
+export * from "./get-root";
 export * from "./get-file";
 export * from "./post-file";
 export * from "./delete-file";

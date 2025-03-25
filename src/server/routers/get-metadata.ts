@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 import { database } from "server";
 import { Router } from "./common";
 
-const metadataHandler: RequestHandler = async (req, res) => {
+const metadataHandler: RequestHandler & { description?: string } = async (req, res) => {
   const { id: idString } = req.params;
   const id = +idString;
   const user = req.user!;
@@ -25,6 +25,9 @@ const metadataHandler: RequestHandler = async (req, res) => {
     }
   }
 };
+
+metadataHandler.description =
+  "Returns metadata found by 'id'. Returns all metadata items if called without 'id'.";
 
 export const metadataRouter: Router = {
   method: "GET",
