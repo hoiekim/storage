@@ -5,7 +5,16 @@ import { IncomingMessage, ServerResponse } from "http";
 import express from "express";
 import { Server as TusServer } from "@tus/server";
 import { FileStore } from "@tus/file-store";
-import { database, getMetadata, getUniqueFilename, Metadata, User, getFilePath } from "server";
+import {
+  database,
+  getMetadata,
+  getUniqueFilename,
+  Metadata,
+  User,
+  getFilePath,
+  TWO_DAYS,
+  ONE_HOUR,
+} from "server";
 import { Router } from "./common";
 // import directly to avoid circular initialization
 import { TEMP_PATH } from "../lib/paths";
@@ -39,36 +48,36 @@ const generateUrl = (req: Req, { proto, host, id }: GenerateUrlOption) => {
 
 const getFileIdFromRequest = (req: Req, lastPath = "") => {
   const queryRemoved = lastPath.split("?")[0];
-  const id = Buffer.from(queryRemoved, "base64url").toString("utf-8");
-  return id;
+  return Buffer.from(queryRemoved, "base64url").toString("utf-8");
 };
 
 const onUploadFinish = async (req: Req, res: ServerResponse, upload: any) => {
   const _itemId = req.headers["item-id"];
   const itemId = typeof _itemId === "string" ? _itemId : null;
   const user = req.user!;
-  const savedPath = upload.storage.path;
-  const filekey = path.basename(savedPath);
+  const temporarilySavedPath = upload.storage.path;
+  const filekey = path.basename(temporarilySavedPath);
 
   const existing = itemId && database.getMetadata({ item_id: itemId, user_id: user.id });
   let metadata: Metadata;
   if (Array.isArray(existing) && existing?.length) {
-    fs.rmSync(savedPath);
+    fs.rmSync(temporarilySavedPath);
     metadata = existing[0];
+    res.statusCode = 208;
   } else {
     const destination = getFilePath(user.id, filekey);
-    fs.renameSync(savedPath, destination);
+    fs.renameSync(temporarilySavedPath, destination);
     const override: Partial<Metadata> = {};
     if (itemId) override.item_id = itemId;
     if (upload.metadata?.filename) override.filename = upload.metadata.filename;
     metadata = await getMetadata(user.id, destination, { override });
     metadata.filename = getUniqueFilename(metadata.filename);
     database.insertMetadata(metadata);
+    res.statusCode = 201;
   }
 
-  fs.rmSync(upload.storage.path + ".json");
+  fs.rmSync(temporarilySavedPath + ".json");
 
-  res.statusCode = 201;
   res.setHeader("Content-Type", "application/json");
   res.end(JSON.stringify({ message: "Upload complete", body: metadata }));
   return { res };
@@ -76,7 +85,10 @@ const onUploadFinish = async (req: Req, res: ServerResponse, upload: any) => {
 
 const server = new TusServer({
   path: "/",
-  datastore: new FileStore({ directory: TEMP_PATH }),
+  datastore: new FileStore({
+    directory: TEMP_PATH,
+    expirationPeriodInMilliseconds: TWO_DAYS,
+  }),
   namingFunction,
   generateUrl,
   getFileIdFromRequest,
@@ -89,4 +101,12 @@ uploadApp.all("*", server.handle.bind(server));
 export const tusRouter: Router = {
   route: "/tus",
   handlers: [uploadApp],
+};
+
+let tusCleanerSchedule: Timer;
+
+export const scheduledTusCleaner = () => {
+  server.cleanUpExpiredUploads().catch(console.error);
+  tusCleanerSchedule = setTimeout(scheduledTusCleaner, ONE_HOUR);
+  return tusCleanerSchedule;
 };

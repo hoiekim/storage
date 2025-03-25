@@ -13,6 +13,7 @@ import {
   allMetadataRouter,
   deleteRouter,
   tusRouter,
+  scheduledTusCleaner,
 } from "./routers";
 
 declare global {
@@ -73,6 +74,8 @@ export class Server {
 
   server: http.Server | undefined;
 
+  private tusCleanerSchedule: Timer | undefined;
+
   start = () => {
     database.init();
     const { app, port } = Server;
@@ -80,11 +83,15 @@ export class Server {
     this.server = app.listen(port, () => {
       if (isTesting) console.log(`Testing Storage server running at ${host}`);
       else console.log(`Storage server running at ${host}`);
+      this.tusCleanerSchedule = scheduledTusCleaner();
     });
     return this.server;
   };
 
-  close = () => this.server?.close();
+  close = () => {
+    this.server?.close();
+    clearTimeout(this.tusCleanerSchedule);
+  };
 }
 
 export * from "./lib";
