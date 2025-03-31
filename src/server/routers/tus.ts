@@ -3,7 +3,7 @@ import fs from "fs";
 import { randomUUID } from "crypto";
 import { IncomingMessage, ServerResponse } from "http";
 import express from "express";
-import { Server as TusServer } from "@tus/server";
+import { Server as TusServer, Upload } from "@tus/server";
 import { FileStore } from "@tus/file-store";
 import {
   database,
@@ -14,6 +14,8 @@ import {
   getFilePath,
   TWO_DAYS,
   ONE_HOUR,
+  decodeBase64,
+  encodeBase64,
 } from "server";
 import { Router } from "./common";
 // import directly to avoid circular initialization
@@ -51,11 +53,21 @@ const getFileIdFromRequest = (req: Req, lastPath = "") => {
   return Buffer.from(queryRemoved, "base64url").toString("utf-8");
 };
 
-const onUploadFinish = async (req: Req, res: ServerResponse, upload: any) => {
-  const _itemId = req.headers["item-id"];
-  const itemId = typeof _itemId === "string" ? _itemId : null;
+export const stringifyUploadMetdata = (metadata: { [k: string]: string }) => {
+  return Object.entries(metadata)
+    .map(([key, value]) => `${key} ${encodeBase64(value)}`)
+    .join(",");
+};
+
+const onUploadFinish = async (req: Req, res: ServerResponse, upload: Upload) => {
+  if (!upload) return { res };
+
+  const uploadMetadata = upload.metadata;
+  const itemId = (uploadMetadata && uploadMetadata["itemId"]) || null;
   const user = req.user!;
-  const temporarilySavedPath = upload.storage.path;
+  const temporarilySavedPath = upload.storage?.path;
+  if (!temporarilySavedPath) return { res };
+
   const filekey = path.basename(temporarilySavedPath);
 
   const existing = itemId && database.getMetadata({ item_id: itemId, user_id: user.id });

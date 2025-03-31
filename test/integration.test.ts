@@ -1,6 +1,13 @@
 import { test, expect, beforeAll, afterAll } from "bun:test";
 import fs from "fs";
-import { DATA_PATH, DATA_TESTING_PATH, database, getFilePath, Server } from "../src/server";
+import {
+  DATA_PATH,
+  DATA_TESTING_PATH,
+  database,
+  getFilePath,
+  Server,
+  stringifyUploadMetdata,
+} from "../src/server";
 import { randomUUID } from "crypto";
 
 if (DATA_PATH !== DATA_TESTING_PATH) {
@@ -66,27 +73,26 @@ test("should reject file upload (multer)", async () => {
 });
 
 test("should upload file (tus)", async () => {
+  const testingStartTime = new Date();
   const blob = new Blob(["1", "2", "3"], { type: "image/png" });
-
+  const filename = "testing-file-tus.png";
   const itemId = randomUUID();
-  const postRequestPath = `${host}/tus/${itemId}${authParam}`;
+  const postRequestPath = `${host}/tus${authParam}`;
+  const uploadMetadataString = stringifyUploadMetdata({ filename, itemId });
+
   const postResponse = await fetch(postRequestPath, {
     method: "POST",
     headers: {
       "Tus-Resumable": "1.0.0",
       "Upload-Length": "3",
-      "Upload-Metadata": `filename ${Buffer.from("testing-file-tus.png").toString("base64")}`,
+      "Upload-Metadata": uploadMetadataString,
     },
   });
 
-  if (!postResponse.ok) {
-    throw new Error(`Failed to create upload: ${postResponse.status}`);
-  }
+  if (!postResponse.ok) throw new Error(`Failed to create upload: ${postResponse.status}`);
 
   const uploadUrl = postResponse.headers.get("Location");
-  if (!uploadUrl) {
-    throw new Error("No upload URL returned");
-  }
+  if (!uploadUrl) throw new Error("No upload URL returned");
 
   const patchResponse = await fetch(`${uploadUrl}${authParam}`, {
     method: "PATCH",
@@ -94,18 +100,24 @@ test("should upload file (tus)", async () => {
       "Tus-Resumable": "1.0.0",
       "Content-Type": "application/offset+octet-stream",
       "Upload-Offset": "0",
-      "item-id": "a1b2c3",
     },
     body: blob,
   });
 
   expect(patchResponse.status).toBe(201);
-  const rJson = await patchResponse.json();
-  expect(rJson.message).toBe("Upload complete");
-
-  const { user_id, filekey } = rJson.body;
+  const responseJson = await patchResponse.json();
+  const { message, body } = responseJson;
+  const responseTime = new Date();
+  expect(message).toBe("Upload complete");
+  const { user_id, filekey, filename: responseFilename, item_id, created, uploaded } = body;
   const filePath = getFilePath(user_id, filekey);
   expect(fs.existsSync(filePath)).toBeTrue();
+  expect(responseFilename).toBe(filename);
+  expect(item_id).toBe(itemId);
+  expect(new Date(created!).getTime()).toBeGreaterThan(testingStartTime.getTime());
+  expect(new Date(created!).getTime()).toBeLessThan(responseTime.getTime());
+  expect(new Date(uploaded).getTime()).toBeGreaterThan(testingStartTime.getTime());
+  expect(new Date(uploaded).getTime()).toBeLessThan(responseTime.getTime());
 });
 
 afterAll(() => {

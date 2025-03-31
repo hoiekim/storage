@@ -6,3 +6,4 @@ export * from "./thumbnails";
 export * from "./compute-tools";
 export * from "./type-checkers";
 export * from "./logger";
+export * from "./string";
