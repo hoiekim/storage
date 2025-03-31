@@ -14,12 +14,10 @@ import {
   getFilePath,
   TWO_DAYS,
   ONE_HOUR,
-  decodeBase64,
   encodeBase64,
+  TEMP_PATH,
 } from "server";
 import { Router } from "./common";
-// import directly to avoid circular initialization
-import { TEMP_PATH } from "../lib/paths";
 
 const uploadApp = express();
 

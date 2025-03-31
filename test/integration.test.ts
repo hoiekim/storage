@@ -39,12 +39,9 @@ test('should return "OK" message', async () => {
 });
 
 test("should upload file (multer)", async () => {
+  const blob = new Blob(["1", "2", "3"], { type: "image/png" });
   const formData = new FormData();
-  formData.append(
-    "file",
-    new Blob(["1", "2", "3"], { type: "image/png" }),
-    "testing-file-multer.png"
-  );
+  formData.append("file", blob, `${randomUUID()}.png`);
   const itemId = randomUUID();
   const requestPath = `${host}/file/${itemId}${authParam}`;
   const response = await fetch(requestPath, { method: "POST", body: formData });
@@ -58,12 +55,9 @@ test("should upload file (multer)", async () => {
 });
 
 test("should reject file upload (multer)", async () => {
+  const blob = new Blob(["1", "2", "3"], { type: "text/plain" });
   const formData = new FormData();
-  formData.append(
-    "file",
-    new Blob(["1", "2", "3"], { type: "text/plain" }),
-    "testing-file-multer.text"
-  );
+  formData.append("file", blob, `${randomUUID()}.txt`);
   const itemId = randomUUID();
   const requestPath = `${host}/file/${itemId}${authParam}`;
   const response = await fetch(requestPath, { method: "POST", body: formData });
@@ -75,7 +69,7 @@ test("should reject file upload (multer)", async () => {
 test("should upload file (tus)", async () => {
   const testingStartTime = new Date();
   const blob = new Blob(["1", "2", "3"], { type: "image/png" });
-  const filename = "testing-file-tus.png";
+  const filename = `${randomUUID()}.png`;
   const itemId = randomUUID();
   const postRequestPath = `${host}/tus${authParam}`;
   const uploadMetadataString = stringifyUploadMetdata({ filename, itemId });
