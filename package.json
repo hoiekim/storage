@@ -17,11 +17,12 @@
     "@types/express": "^5.0.0",
     "@types/fluent-ffmpeg": "^2.1.27",
     "@types/multer": "^1.4.12",
+    "tus-js-client": "^4.3.1",
     "typescript": "^5.6.3"
   },
   "dependencies": {
-    "@tus/file-store": "^1.5.1",
-    "@tus/server": "^1.10.0",
+    "@tus/file-store": "^2.0.0",
+    "@tus/server": "^2.1.0",
     "bun": "^1.1.36",
     "dotenv": "^16.4.5",
     "exiftool-vendored": "^29.0.0",

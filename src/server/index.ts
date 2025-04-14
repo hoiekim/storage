@@ -25,6 +25,17 @@ declare global {
   }
 }
 
+declare global {
+  export interface Request {
+    node?: {
+      req: {
+        user?: User;
+        filekey?: string;
+      };
+    };
+  }
+}
+
 const createExpressApp = () => {
   const app = express();
 
