@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg";
-import { TEMP_PATH, getThumbnailPath } from "server";
+import { TEMP_PATH, getThumbnailPath, logger } from "server";
 
 export const getPhotoThumbnail = async (
   user_id: number,
@@ -15,10 +15,10 @@ export const getPhotoThumbnail = async (
     const filekey = ext.length ? filename.slice(0, -ext.length) : filename;
     const outputPath = getThumbnailPath(user_id, filekey);
     await sharp(filePath).jpeg().resize(width, width).withMetadata().toFile(outputPath);
-    if (!silent) console.log(`Photo thumbnail created for ${filePath}`);
+    if (!silent) logger.log(`Photo thumbnail created for ${filePath}`);
     return filekey;
   } catch (err) {
-    if (!silent) console.error("Error creating photo thumbnail:", err);
+    if (!silent) logger.error("Error creating photo thumbnail:", err);
     throw err;
   }
 };
@@ -59,7 +59,7 @@ export const getVideoThumbnail = async (
   });
   fs.rmSync(tempPath);
 
-  console.log(`Video thumbnail created for ${filePath}`);
+  logger.log(`Video thumbnail created for ${filePath}`);
 
   return filekey;
 };

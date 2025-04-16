@@ -6,10 +6,9 @@ import {
   rootRouter,
   getFileRouter,
   thumbnailRouter,
-  metadataRouter,
-  multerErrorHandler,
-  postFileRouter,
-  postFileWithItemIdRouter,
+  metadataByIdRouter,
+  metadataByFilekeyRouter,
+  metadataByItemIdRouter,
   allMetadataRouter,
   deleteRouter,
   tusRouter,
@@ -43,14 +42,14 @@ const createExpressApp = () => {
 
   const routers = [
     rootRouter,
-    metadataRouter,
     allMetadataRouter,
+    metadataByIdRouter,
+    metadataByFilekeyRouter,
+    metadataByItemIdRouter,
     thumbnailRouter,
     getFileRouter,
     deleteRouter,
     tusRouter,
-    postFileRouter,
-    postFileWithItemIdRouter,
   ];
 
   routers.forEach(({ method, route, handlers }) => {
@@ -64,8 +63,6 @@ const createExpressApp = () => {
       app.use(route, ...handlers);
     }
   });
-
-  app.use(multerErrorHandler);
 
   app.use("*", (req, res) => {
     res.status(404).json({ message: "Not found" });

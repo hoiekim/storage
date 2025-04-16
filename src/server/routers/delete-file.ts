@@ -32,7 +32,7 @@ const deleteHandler: RequestHandler & { description?: string } = async (req, res
   }
 };
 
-deleteHandler.description = "Deletes file found by 'filekey'.";
+deleteHandler.description = "Deletes file found by 'id'.";
 
 export const deleteRouter: Router = {
   method: "DELETE",

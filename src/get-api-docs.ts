@@ -1,28 +1,27 @@
 import { Server } from "./server";
 
-const main = () => {
-  type Route = { path: string; methods: string[]; descriptions: string[] };
+export const getApiDocs = () => {
+  type Route = { path: string; method: string; descriptions: string[] };
   const routes: Route[] = [];
-  Server.app._router.stack.forEach((middleware: any) => {
-    if (middleware.route) {
-      const methods = Object.keys(middleware.route.methods);
-      const descriptions = middleware.route.stack
+  Server.app._router.stack.forEach(({ route }: any) => {
+    if (route) {
+      const methods = Object.keys(route.methods);
+      if (methods.length !== 1) throw new Error("Routers must have exactly one method.");
+      const method = methods[0];
+      const descriptions = route.stack
         .map((layer: any) => layer.handle.description)
         .filter(Boolean);
-      routes.push({ path: middleware.route.path, methods, descriptions });
-    } else if (middleware.name === "router") {
-      middleware.handle.stack.forEach((nestedMiddleware: any) => {
-        if (nestedMiddleware.route) {
-          const methods = Object.keys(nestedMiddleware.route.methods);
-          const descriptions = nestedMiddleware.route.stack
-            .map((layer: any) => layer.handle.description)
-            .filter(Boolean);
-          routes.push({ path: nestedMiddleware.route.path, methods, descriptions });
-        }
-      });
+      routes.push({ path: route.path, method, descriptions });
     }
   });
-  console.log(routes);
+  return routes;
 };
 
-main();
+const main = () => {
+  const docs = getApiDocs();
+  console.log(docs);
+};
+
+if (require.main === module) {
+  main();
+}

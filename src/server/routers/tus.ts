@@ -14,6 +14,7 @@ import {
   encodeBase64,
   TEMP_PATH,
   decodeBase64,
+  logger,
 } from "server";
 import { Router } from "./common";
 
@@ -51,9 +52,9 @@ const onUploadCreate = async (req: Request, upload: Upload) => {
   } else if (!itemId) {
     throw new Error("Invalid request: itemId is required");
   } else {
-    const existing = database.getMetadata({ item_id: itemId, user_id: user.id });
-    if (Array.isArray(existing) && existing?.length) {
-      throw new Error("Item already exists");
+    const existings = database.getMetadata({ item_id: itemId, user_id: user.id });
+    if (Array.isArray(existings) && existings?.length) {
+      throw new Error("Invalid request: itemId is already used");
     }
   }
   return {};
@@ -65,6 +66,9 @@ const onUploadFinish = async (req: Request, upload: Upload) => {
   const user = req.node?.req.user!;
   const temporarilySavedPath = upload.storage?.path;
   if (!temporarilySavedPath) return {};
+
+  const existings = database.getMetadata({ item_id: itemId, user_id: user.id });
+  if (Array.isArray(existings) && existings?.length) return {};
 
   const filekey = path.basename(temporarilySavedPath);
 
@@ -80,7 +84,7 @@ const onUploadFinish = async (req: Request, upload: Upload) => {
 };
 
 const onIncomingRequest = async (req: Request, uploadId: string) => {
-  // console.log(req.node?.req.method, uploadId, req.node?.req.headers);
+  // logger.log(req.node?.req.method, uploadId, req.node?.req.headers);
 };
 
 const server = new TusServer({
@@ -96,7 +100,6 @@ const server = new TusServer({
   onIncomingRequest,
 });
 
-// @ts-ignore
 uploadApp.all("*", server.handle.bind(server));
 
 export const tusRouter: Router = {
@@ -109,7 +112,7 @@ let tusCleanerSchedule: Timer;
 export const scheduledTusCleaner = () => {
   server
     .cleanUpExpiredUploads()
-    .then((number) => number && console.log(`TusCleaner cleaned up ${number} expired uploads.`))
+    .then((number) => number && logger.log(`TusCleaner cleaned up ${number} expired uploads.`))
     .catch(console.error);
   tusCleanerSchedule = setTimeout(scheduledTusCleaner, ONE_HOUR);
   return tusCleanerSchedule;

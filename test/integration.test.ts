@@ -1,5 +1,6 @@
 import { test, expect, beforeAll, afterAll } from "bun:test";
 import fs from "fs";
+import { randomUUID } from "crypto";
 import { OnSuccessPayload, Upload as TusUpload } from "tus-js-client";
 import {
   DATA_PATH,
@@ -10,7 +11,6 @@ import {
   Server,
   stringifyUploadMetdata,
 } from "../src/server";
-import { randomUUID } from "crypto";
 
 if (DATA_PATH !== DATA_TESTING_PATH) {
   throw new Error(
@@ -40,35 +40,7 @@ test('should return "OK" message', async () => {
   expect(response.status).toBe(200);
 });
 
-test("should successfully upload file via file endpoint", async () => {
-  const blob = new Blob(["1", "2", "3"], { type: "image/png" });
-  const formData = new FormData();
-  formData.append("file", blob, `${randomUUID()}.png`);
-  const itemId = randomUUID();
-  const requestPath = `${host}/file/${itemId}${authParam}`;
-  const response = await fetch(requestPath, { method: "POST", body: formData });
-  const rJson = await response.json();
-  expect(rJson.message).toBe("File uploaded successfully.");
-  expect(response.status).toBe(200);
-
-  const { user_id, filekey } = rJson.body;
-  const filePath = getFilePath(user_id, filekey);
-  expect(fs.existsSync(filePath)).toBeTrue();
-});
-
-test("should reject file upload via file endpoint", async () => {
-  const blob = new Blob(["1", "2", "3"], { type: "text/plain" });
-  const formData = new FormData();
-  formData.append("file", blob, `${randomUUID()}.txt`);
-  const itemId = randomUUID();
-  const requestPath = `${host}/file/${itemId}${authParam}`;
-  const response = await fetch(requestPath, { method: "POST", body: formData });
-  const rJson = await response.json();
-  expect(rJson.message).toBe("Error: Invalid file type. Only photos and videos are allowed.");
-  expect(response.status).toBe(400);
-});
-
-test("should successfully upload file via tus endpoint", async () => {
+test("should successfully upload file", async () => {
   const blob = new Blob(["1", "2", "3"], { type: "image/png" });
   const filename = `${randomUUID()}.png`;
   const itemId = randomUUID();
@@ -123,8 +95,6 @@ test("should successfully upload file via tus endpoint", async () => {
 
   expect(patchResponse2.status).toBe(204);
 
-  console.log(patchResponse2.headers);
-
   uploadOffset = +(patchResponse2.headers.get("upload-offset") || 0);
   expect(uploadOffset).toBe(blob.size);
 
@@ -137,7 +107,7 @@ test("should successfully upload file via tus endpoint", async () => {
   expect(metadata.item_id).toBe(itemId);
 });
 
-test("should reject file upload via tus endpoint", async () => {
+test("should reject file upload", async () => {
   const filename = `${randomUUID()}.txt`;
   const postRequestPath = `${host}/tus`;
   const uploadMetadataString = stringifyUploadMetdata({ filename });

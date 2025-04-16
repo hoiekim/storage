@@ -92,9 +92,9 @@ export class Metadata {
 
 export type MetadataSchema = { [k in keyof Metadata]: string };
 export const metadataSchema: MetadataSchema = {
-  [ID]: "INTEGER NOT NULL PRIMARY KEY",
+  [ID]: "INTEGER PRIMARY KEY",
   [USER_ID]: "INTEGER NOT NULL",
-  [FILEKEY]: "TEXT NOT NULL",
+  [FILEKEY]: "TEXT NOT NULL UNIQUE",
   [FILENAME]: "TEXT NOT NULL",
   [FILESIZE]: "INTEGER NOT NULL",
   [MIME_TYPE]: "TEXT NOT NULL",

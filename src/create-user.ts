@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { User, database, isError } from "./server";
+import { User, database, isError, logger } from "./server";
 
 const main = () => {
   let api_key: string = randomUUID();
@@ -11,14 +11,16 @@ const main = () => {
   if (username) {
     try {
       database.insertUser(new User({ id: -1, username, api_key, created: new Date() }));
-      console.log(`Successfully created user\n-> username: ${username}\n-> api_key: ${api_key}`);
+      logger.log(`Successfully created user\n-> username: ${username}\n-> api_key: ${api_key}`);
     } catch (error: any) {
-      if (isError(error)) console.error("Failed:", error.message);
-      else console.error("Failed:", error);
+      if (isError(error)) logger.error("Failed:", error.message);
+      else logger.error("Failed:", error);
     }
   } else {
-    console.error("Failed: No --username is specified");
+    logger.error("Failed: No --username is specified");
   }
 };
 
-main();
+if (require.main === module) {
+  main();
+}

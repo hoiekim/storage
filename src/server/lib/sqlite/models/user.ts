@@ -42,7 +42,7 @@ export class User {
 
 export type UserSchema = { [k in keyof User]: string };
 export const userSchema: UserSchema = {
-  [ID]: "INTEGER NOT NULL PRIMARY KEY",
+  [ID]: "INTEGER PRIMARY KEY",
   [USERNAME]: "TEXT NOT NULL UNIQUE",
   [API_KEY]: "TEXT NOT NULL UNIQUE",
   [CREATED]: "TEXT NOT NULL",
