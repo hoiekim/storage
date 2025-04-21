@@ -30,6 +30,7 @@ const getMetadataHandler = (options: GetMetadataHandlerOptions) => {
         res.status(200).json({ body: metadataFoundById });
         return;
       }
+      res.status(204).end();
     } catch (err: any) {
       const message = "message" in err ? err.message : "Unknown error";
       res.status(404).json({ message: `Metadata not found: ${message}` });

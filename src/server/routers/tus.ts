@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import express from "express";
 import { Server as TusServer, Upload } from "@tus/server";
-import { FileStore } from "@tus/file-store";
+import { FileConfigstore, FileStore } from "@tus/file-store";
 import {
   database,
   getMetadata,
@@ -109,11 +109,31 @@ export const tusRouter: Router = {
 
 let tusCleanerSchedule: Timer;
 
-export const scheduledTusCleaner = () => {
-  server
-    .cleanUpExpiredUploads()
-    .then((number) => number && logger.log(`TusCleaner cleaned up ${number} expired uploads.`))
-    .catch(console.error);
+export const scheduledTusCleaner = async () => {
   tusCleanerSchedule = setTimeout(scheduledTusCleaner, ONE_HOUR);
-  return tusCleanerSchedule;
+
+  const fileStore = server.datastore as FileStore;
+  const configStore = fileStore.configstore as FileConfigstore;
+  const uploadIds = await configStore.list();
+
+  const { expirationPeriodInMilliseconds } = fileStore;
+  let removedCount = 0;
+  const promises = uploadIds.map(async (id) => {
+    const uploadData = await configStore.get(id);
+    if (!uploadData) return;
+    const { creation_date } = uploadData;
+    if (!creation_date) return;
+    const createDate = new Date(creation_date);
+    if (!createDate.getTime()) return;
+    const expirationTime = createDate.getTime() + expirationPeriodInMilliseconds;
+    if (expirationTime > Date.now()) return;
+    fileStore.remove(id);
+    removedCount++;
+  });
+
+  await Promise.all(promises);
+
+  logger.log(`Removed ${removedCount} expired uploads.`);
 };
+
+export const stopTusCleanerSchedule = () => clearTimeout(tusCleanerSchedule);
