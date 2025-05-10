@@ -2,9 +2,9 @@ import path from "path";
 import fs from "fs";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg";
-import { TEMP_PATH, getThumbnailPath, logger } from "server";
 import heicConvert from "heic-convert";
 import { randomUUID } from "crypto";
+import { TEMP_PATH, getThumbnailPath, logger } from "server";
 
 const heicToJpeg = async (filePath: string) => {
   const tempPath = path.join(TEMP_PATH, randomUUID());
@@ -25,25 +25,29 @@ export const getPhotoThumbnail = async (
   filePath: string,
   { width = 300, silent = false, isHeic = false } = {}
 ) => {
+  let tempPath: string | null = null;
+
   try {
     const filename = path.basename(filePath);
     const ext = path.extname(filename);
     const filekey = ext.length ? filename.slice(0, -ext.length) : filename;
     const outputPath = getThumbnailPath(user_id, filekey);
 
-    if (isHeic) {
-      const tempPath = await heicToJpeg(filePath);
-      await sharp(tempPath).jpeg().resize(width, width).withMetadata().toFile(outputPath);
-      fs.rmSync(tempPath);
-    } else {
-      await sharp(filePath).jpeg().resize(width, width).withMetadata().toFile(outputPath);
-    }
+    if (isHeic) tempPath = await heicToJpeg(filePath);
+
+    await sharp(tempPath || filePath)
+      .jpeg()
+      .resize(width, width)
+      .withMetadata()
+      .toFile(outputPath);
 
     if (!silent) logger.log(`Photo thumbnail created for ${filePath}`);
     return filekey;
   } catch (err) {
     if (!silent) logger.error("Error creating photo thumbnail:", err);
     throw err;
+  } finally {
+    if (tempPath) fs.rmSync(tempPath);
   }
 };
 
