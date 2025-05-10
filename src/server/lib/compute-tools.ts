@@ -48,7 +48,8 @@ export const getMetadata = async (
     if (!createThumbnail) return res(null);
     try {
       if (MIMEType.startsWith("image/")) {
-        const thumbnail = await getPhotoThumbnail(user_id, filePath);
+        const isHeic = MIMEType === "image/heic";
+        const thumbnail = await getPhotoThumbnail(user_id, filePath, { isHeic });
         res(thumbnail);
       } else if (MIMEType.startsWith("video/")) {
         const time = isNumber(Duration) ? Duration / 2 : 0;

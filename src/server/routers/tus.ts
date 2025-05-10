@@ -84,7 +84,7 @@ const onUploadFinish = async (req: Request, upload: Upload) => {
 };
 
 const onIncomingRequest = async (req: Request, uploadId: string) => {
-  // logger.log(req.node?.req.method, uploadId, req.node?.req.headers);
+  logger.log(req.node?.req.method, uploadId, req.node?.req.headers);
 };
 
 const server = new TusServer({
