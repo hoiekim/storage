@@ -96,9 +96,9 @@ export const getMetadata = async (
   });
 };
 
-export const getUniqueFilename = (filename: string) => {
+export const getUniqueFilename = (user_id: number, filename: string) => {
   let result = filename;
-  let existing = database.getMetadata({ filename });
+  let existing = database.getMetadata({ user_id, filename });
   while (existing.length) {
     const ext = path.extname(result);
     const name = result.slice(0, -ext.length);
@@ -111,7 +111,7 @@ export const getUniqueFilename = (filename: string) => {
     } else {
       result = `${name.trimEnd()} (1)${ext}`;
     }
-    existing = database.getMetadata({ filename: result });
+    existing = database.getMetadata({ user_id, filename: result });
   }
   return result;
 };

@@ -19,7 +19,7 @@ import {
 } from "./common";
 
 export class Metadata {
-  id: number;
+  id: number | bigint;
   user_id: number;
   filekey: string;
   filename: string;
@@ -111,6 +111,4 @@ export const metadataSchema: MetadataSchema = {
 
 export const metadataConstraints = [`FOREIGN KEY(${USER_ID}) REFERENCES ${USER}(${ID})`];
 
-export const lightColumns = Object.keys(metadataSchema).filter(
-  (c) => !metadataSchema[c as keyof Metadata].includes("BLOB")
-);
+export const metadataColumns = Object.keys(metadataSchema);

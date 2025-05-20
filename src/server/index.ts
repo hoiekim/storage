@@ -11,6 +11,9 @@ import {
   metadataByItemIdRouter,
   allMetadataRouter,
   deleteRouter,
+  getLabelsRouter,
+  getMetadataCountByLabelRouter,
+  postLabelsRouter,
   tusRouter,
   scheduledTusCleaner,
   stopTusCleanerSchedule,
@@ -39,6 +42,7 @@ declare global {
 const createExpressApp = () => {
   const app = express();
 
+  app.use(express.json());
   app.use(authenticate);
 
   const routers = [
@@ -50,6 +54,9 @@ const createExpressApp = () => {
     thumbnailRouter,
     getFileRouter,
     deleteRouter,
+    getLabelsRouter,
+    getMetadataCountByLabelRouter,
+    postLabelsRouter,
     tusRouter,
   ];
 

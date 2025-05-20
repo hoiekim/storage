@@ -11,7 +11,7 @@ import {
   HEIGHT,
   ID,
   LATITUDE,
-  lightColumns,
+  metadataColumns,
   LONGITUDE,
   Metadata,
   MIME_TYPE,
@@ -29,7 +29,11 @@ import {
   USERNAME,
   ADMIN,
   USER_ID,
+  LABEL,
+  METADATA_ID,
+  LABELNAME,
 } from "./models";
+import { Label, labelColumns, labelConstraints, labelSchema } from "./models/label";
 
 const database = new Database(DB_PATH);
 
@@ -61,6 +65,9 @@ export const init = () => {
 
   const createUserTableSql = getTableCreationQuery(USER, userSchema);
   database.exec(createUserTableSql);
+
+  const createLabelTableSql = getTableCreationQuery(LABEL, labelSchema, labelConstraints);
+  database.exec(createLabelTableSql);
 
   const allUsers = queryUser(`SELECT * from ${USER}`);
 
@@ -204,10 +211,12 @@ export const removeMetadata = (metadata: Partial<Metadata>) => {
   return queryMetadata(sql);
 };
 
-export const getMetadata = (metadata: Partial<Metadata>) => {
+export type GetMetadataQuery = Partial<Metadata> & { [USER_ID]: number };
+
+export const getMetadata = (metadata: GetMetadataQuery) => {
   const query = prepareQuery(metadata);
   const sql = `
-    SELECT ${lightColumns.join(", ")}
+    SELECT ${metadataColumns.join(", ")}
     FROM ${METADATA}
     ${query}
   `;
@@ -216,24 +225,15 @@ export const getMetadata = (metadata: Partial<Metadata>) => {
 
 export const getAllMetadata = () => {
   const sql = `
-    SELECT ${lightColumns.join(", ")}
+    SELECT ${metadataColumns.join(", ")}
     FROM ${METADATA}
-  `;
-  return queryMetadata(sql);
-};
-
-export const getMetadataByFilenameLike = (filename: string) => {
-  const sql = `
-    SELECT ${lightColumns.join(", ")}
-    FROM ${METADATA}
-    WHERE ${FILENAME} LIKE '%${filename}%'
   `;
   return queryMetadata(sql);
 };
 
 export const getMetadataByCreatedDate = (greaterThanOrEqual: Date, lessThanOrEqual: Date) => {
   const sql = `
-    SELECT ${lightColumns.join(", ")}
+    SELECT ${metadataColumns.join(", ")}
     FROM ${METADATA}
     WHERE datetime(${CREATED}) >= ?
     AND datetime(${CREATED}) <= ?
@@ -241,24 +241,6 @@ export const getMetadataByCreatedDate = (greaterThanOrEqual: Date, lessThanOrEqu
   const gte = greaterThanOrEqual.toISOString();
   const lte = lessThanOrEqual.toISOString();
   return queryMetadata(sql, gte, lte);
-};
-
-export const getAllPhotoMetadata = () => {
-  const sql = `
-    SELECT ${lightColumns.join(", ")}
-    FROM ${METADATA}
-    WHERE ${MIME_TYPE} LIKE 'image/%'
-  `;
-  return queryMetadata(sql);
-};
-
-export const getAllVideoMetadata = () => {
-  const sql = `
-    SELECT ${lightColumns.join(", ")}
-    FROM ${METADATA}
-    WHERE ${MIME_TYPE} LIKE 'video/%'
-  `;
-  return queryMetadata(sql);
 };
 
 export const insertUser = (user: User) => {
@@ -298,4 +280,84 @@ export const getUser = (user: Partial<User>) => {
 
 export const isUserExists = (id: number) => {
   return getUser({ id }).length === 1;
+};
+
+const queryLabel = (sql: string, ...args: SQLQueryBindings[]) => {
+  return database
+    .prepare<Label, SQLQueryBindings[]>(sql)
+    .all(...args)
+    .map((l) => {
+      const nullified: any = { ...l };
+      Object.keys(labelSchema).forEach((c) => {
+        if (!isDefined(nullified[c])) nullified[c] = null;
+      });
+      return new Label(nullified);
+    });
+};
+
+export const getLabels = (user_id: number, metadata_id: number) => {
+  const sql = `
+    SELECT ${labelColumns.join(", ")}
+    FROM ${LABEL}
+    where ${USER_ID} = ?
+    and ${METADATA_ID} = ?
+  `;
+  return queryLabel(sql, user_id, metadata_id);
+};
+
+export const insertLabels = (
+  metadata_id: number | bigint,
+  user_id: number,
+  labelnames: string[]
+) => {
+  const values = labelnames
+    .map((labelname) => `(${metadata_id}, ${user_id}, '${labelname}')`)
+    .join(", ");
+
+  const sql = `
+    INSERT INTO ${LABEL} (
+      ${METADATA_ID},
+      ${USER_ID},
+      ${LABELNAME}
+    ) VALUES ${values}
+  `;
+
+  return database.exec(sql);
+};
+
+export const removeLabels = (metadata_id: number | bigint, user_id: number) => {
+  const sql = `
+    DELETE FROM ${LABEL}
+    WHERE ${METADATA_ID} = ?
+    AND ${USER_ID} = ?
+  `;
+  return database.prepare(sql).run(metadata_id, user_id);
+};
+
+export const getMetadataByLabel = (user_id: number, labelname: string) => {
+  const selectColumns = metadataColumns.map((c) => `${METADATA}.${c} as ${c}`);
+  const sql = `
+    SELECT ${selectColumns.join(", ")}
+    FROM ${METADATA}
+    INNER JOIN ${LABEL}
+    ON ${METADATA}.${ID} = ${LABEL}.${METADATA_ID}
+    WHERE ${METADATA}.${USER_ID} = ?
+    AND ${LABEL}.${LABELNAME} = ?
+  `;
+  return queryMetadata(sql, user_id, labelname);
+};
+
+export interface MetadataCountByLabel {
+  labelname: string;
+  metadata_count: number;
+}
+
+export const getMetadataCountByLabel = (user_id: number) => {
+  const sql = `
+  SELECT ${LABELNAME}, COUNT(UNIQUE(${METADATA_ID})) as metadata_count
+  FROM ${LABEL}
+  WHERE ${USER_ID} = ${user_id}
+  GROUP BY ${LABELNAME}
+  `;
+  return database.prepare<MetadataCountByLabel, SQLQueryBindings[]>(sql).all();
 };

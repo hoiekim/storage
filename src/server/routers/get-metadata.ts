@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { database, Metadata } from "server";
+import { database } from "server";
 import { Router } from "./common";
 
 interface GetMetadataHandlerOptions {
@@ -13,7 +13,7 @@ const getMetadataHandler = (options: GetMetadataHandlerOptions) => {
     const user = req.user!;
     const user_id = user.id;
 
-    const metadataQuery: Partial<Metadata> = { user_id };
+    const metadataQuery: database.GetMetadataQuery = { user_id };
     if (parameterName) {
       const parameterValue = req.params[parameterName];
       const id = +parameterValue;

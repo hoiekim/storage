@@ -15,6 +15,8 @@ import {
   TEMP_PATH,
   decodeBase64,
   logger,
+  isDate,
+  isPotentialDate,
 } from "server";
 import { Router } from "./common";
 
@@ -63,6 +65,9 @@ const onUploadCreate = async (req: Request, upload: Upload) => {
 const onUploadFinish = async (req: Request, upload: Upload) => {
   const uploadMetadata = upload.metadata;
   const itemId = (uploadMetadata && uploadMetadata["itemId"]) || null;
+  const filename = (uploadMetadata && uploadMetadata["filename"]) || null;
+  const created = (uploadMetadata && uploadMetadata["created"]) || null;
+  const labelsString = (uploadMetadata && uploadMetadata["labels"]) || null;
   const user = req.node?.req.user!;
   const temporarilySavedPath = upload.storage?.path;
   if (!temporarilySavedPath) return {};
@@ -75,16 +80,23 @@ const onUploadFinish = async (req: Request, upload: Upload) => {
   const destination = getFilePath(user.id, filekey);
   const override: Partial<Metadata> = {};
   if (itemId) override.item_id = itemId;
-  if (upload.metadata?.filename) override.filename = upload.metadata.filename;
+  if (filename) override.filename = filename;
+  if (isPotentialDate(created)) override.created = new Date(created);
   const metadata = await getMetadata(user.id, temporarilySavedPath, { override });
-  metadata.filename = getUniqueFilename(metadata.filename);
-  database.insertMetadata(metadata);
+  metadata.filename = getUniqueFilename(user.id, metadata.filename);
+  const inserted = database.insertMetadata(metadata);
+  if (labelsString) {
+    metadata.id = inserted.lastInsertRowid;
+    const labels = labelsString.split(",");
+    database.removeLabels(metadata.id, user.id);
+    database.insertLabels(metadata.id, user.id, labels);
+  }
   fs.copyFileSync(temporarilySavedPath, destination);
   return {};
 };
 
 const onIncomingRequest = async (req: Request, uploadId: string) => {
-  logger.log(req.node?.req.method, uploadId, req.node?.req.headers);
+  // logger.log(req.node?.req.method, uploadId, req.node?.req.headers);
 };
 
 const server = new TusServer({

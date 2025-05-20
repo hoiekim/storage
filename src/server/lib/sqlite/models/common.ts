@@ -1,5 +1,6 @@
 export const METADATA = "metadata";
 export const USER = "user";
+export const LABEL = "label";
 
 export const ID = "id";
 export const FILEKEY = "filekey";
@@ -15,6 +16,9 @@ export const LATITUDE = "latitude";
 export const LONGITUDE = "longitude";
 export const CREATED = "created";
 export const UPLOADED = "uploaded";
+
+export const METADATA_ID = "metadata_id";
+export const LABELNAME = "labelname";
 
 export const USER_ID = "user_id";
 
