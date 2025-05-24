@@ -305,6 +305,15 @@ export const getLabels = (user_id: number, metadata_id: number) => {
   return queryLabel(sql, user_id, metadata_id);
 };
 
+export const getAllLabels = (user_id: number) => {
+  const sql = `
+    SELECT ${labelColumns.join(", ")}
+    FROM ${LABEL}
+    where ${USER_ID} = ?
+  `;
+  return queryLabel(sql, user_id);
+};
+
 export const insertLabels = (
   metadata_id: number | bigint,
   user_id: number,
